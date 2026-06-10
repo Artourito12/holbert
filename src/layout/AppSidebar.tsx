@@ -1,24 +1,22 @@
 import { NavLink } from "react-router";
 import {
   LayoutDashboard,
-  FolderOpen,
-  FileText,
-  Users,
-  Bell,
-  BookOpen,
   Sparkles,
+  FolderOpen,
+  MessageSquare,
+  BookOpen,
+  Bell,
   Settings,
 } from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Tableau de bord" },
-  { to: "/dossiers", icon: FolderOpen, label: "Dossiers" },
-  { to: "/documents", icon: FileText, label: "Documents" },
-  { to: "/contacts", icon: Users, label: "Contacts" },
-  { to: "/veille", icon: Bell, label: "Veille juridique" },
+  { to: "/analyse-contrat", icon: Sparkles, label: "Analyser un contrat" },
+  { to: "/contrats", icon: FolderOpen, label: "Contrats" },
+  { to: "/dossiers", icon: MessageSquare, label: "Dossiers de cas" },
   { to: "/modeles", icon: BookOpen, label: "Modèles" },
-  { to: "/assistant", icon: Sparkles, label: "Assistant IA" },
+  { to: "/veille", icon: Bell, label: "Veille juridique" },
 ];
 
 const bottomItems = [{ to: "/parametres", icon: Settings, label: "Paramètres" }];

@@ -11,6 +11,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
+import ContractUpload from "./pages/ContractUpload";
+import ContractDetail from "./pages/ContractDetail";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -87,12 +89,12 @@ export default function App() {
                   }
                 >
                   <Route path="/" element={<Dashboard />} />
-                  <Route path="/dossiers" element={<Placeholder title="Dossiers" />} />
-                  <Route path="/documents" element={<Placeholder title="Documents" />} />
-                  <Route path="/contacts" element={<Placeholder title="Contacts" />} />
-                  <Route path="/veille" element={<Placeholder title="Veille juridique" />} />
+                  <Route path="/analyse-contrat" element={<ContractUpload />} />
+                  <Route path="/contrats" element={<Placeholder title="Contrats" />} />
+                  <Route path="/contrats/:id" element={<ContractDetail />} />
+                  <Route path="/dossiers" element={<Placeholder title="Dossiers de cas" />} />
                   <Route path="/modeles" element={<Placeholder title="Modèles" />} />
-                  <Route path="/assistant" element={<Placeholder title="Assistant IA" />} />
+                  <Route path="/veille" element={<Placeholder title="Veille juridique" />} />
                   <Route path="/parametres" element={<Placeholder title="Paramètres" />} />
                 </Route>
               </Routes>
