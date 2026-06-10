@@ -13,6 +13,7 @@ import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
 import ContractUpload from "./pages/ContractUpload";
 import ContractDetail from "./pages/ContractDetail";
+import ContractsList from "./pages/ContractsList";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
@@ -90,7 +91,7 @@ export default function App() {
                 >
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/analyse-contrat" element={<ContractUpload />} />
-                  <Route path="/contrats" element={<Placeholder title="Contrats" />} />
+                  <Route path="/contrats" element={<ContractsList />} />
                   <Route path="/contrats/:id" element={<ContractDetail />} />
                   <Route path="/dossiers" element={<Placeholder title="Dossiers de cas" />} />
                   <Route path="/modeles" element={<Placeholder title="Modèles" />} />
