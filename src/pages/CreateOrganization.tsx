@@ -48,9 +48,7 @@ export default function CreateOrganization() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-10 dark:bg-gray-950">
       <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-md dark:border-gray-800 dark:bg-gray-900 sm:p-8">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-500 text-white font-bold">
-            H
-          </div>
+          <img src="/logo.png" alt="Holbert" className="h-10 w-10 object-contain" />
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             Holbert
           </h1>

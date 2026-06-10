@@ -32,9 +32,7 @@ export default function AppSidebar() {
       } ${isMobileOpen ? "translate-x-0" : "-translate-x-full xl:translate-x-0"}`}
     >
       <div className="flex items-center gap-3 px-5 py-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white font-bold">
-          H
-        </div>
+        <img src="/logo.png" alt="Holbert" className="h-9 w-9 object-contain" />
         {open && (
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
             Holbert
