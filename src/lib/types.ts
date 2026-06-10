@@ -95,6 +95,92 @@ export function isAllowedFile(file: File): boolean {
   return name.endsWith(".pdf") || name.endsWith(".docx") || name.endsWith(".doc");
 }
 
+// ============================================================================
+// Module 4 — Dossiers de cas
+// ============================================================================
+
+export type LegalDomain =
+  | "contrat"
+  | "travail"
+  | "social"
+  | "commercial"
+  | "societe"
+  | "fiscal"
+  | "immobilier"
+  | "propriete_intellectuelle"
+  | "donnees_personnelles"
+  | "concurrence"
+  | "penal_affaires"
+  | "autre";
+
+export type CaseStatus = "open" | "pending" | "resolved" | "escalated" | "archived";
+
+export type AnalysisMode =
+  | "standard"
+  | "contradictoire"
+  | "risque_contentieux"
+  | "negociation"
+  | "memo";
+
+export type CaseMessageRole = "user" | "assistant" | "system";
+
+export type LegalCase = {
+  id: string;
+  org_id: string;
+  title: string;
+  domain: LegalDomain;
+  initial_question: string | null;
+  status: CaseStatus;
+  memo_summary: string | null;
+  memo_generated_at: string | null;
+  tags: string[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CaseMessage = {
+  id: string;
+  case_id: string;
+  org_id: string;
+  role: CaseMessageRole;
+  content: string;
+  content_json: any;
+  mode: AnalysisMode;
+  confidence_level: "green" | "orange" | "red" | null;
+  citations: any[];
+  position: number;
+  model: string | null;
+  tokens_in: number | null;
+  tokens_out: number | null;
+  duration_ms: number | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export const LEGAL_DOMAINS: { value: LegalDomain; label: string }[] = [
+  { value: "contrat", label: "Droit des contrats" },
+  { value: "travail", label: "Droit du travail" },
+  { value: "social", label: "Droit social / sécurité sociale" },
+  { value: "commercial", label: "Droit commercial" },
+  { value: "societe", label: "Droit des sociétés" },
+  { value: "fiscal", label: "Droit fiscal" },
+  { value: "immobilier", label: "Droit immobilier" },
+  { value: "propriete_intellectuelle", label: "Propriété intellectuelle" },
+  { value: "donnees_personnelles", label: "Données personnelles / RGPD" },
+  { value: "concurrence", label: "Droit de la concurrence" },
+  { value: "penal_affaires", label: "Pénal des affaires" },
+  { value: "autre", label: "Autre / non spécifié" },
+];
+
+export const ANALYSIS_MODES: { value: AnalysisMode; label: string; description: string }[] = [
+  { value: "standard", label: "Analyse standard", description: "Vue d'ensemble équilibrée" },
+  { value: "contradictoire", label: "Arguments pour / contre", description: "Analyse contradictoire" },
+  { value: "risque_contentieux", label: "Risque contentieux", description: "Probabilité + enjeu financier estimé" },
+  { value: "negociation", label: "Stratégie de négociation", description: "Leviers, blocages, fallbacks" },
+  { value: "memo", label: "Mémo juridique", description: "Rédige un mémo structuré" },
+];
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`;
