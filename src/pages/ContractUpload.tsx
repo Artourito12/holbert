@@ -91,7 +91,7 @@ export default function ContractUpload() {
         .update({ storage_path: storagePath })
         .eq("id", contract.id);
 
-      navigate(`/contrats/${contract.id}`);
+      navigate(`/contrats/${contract.id}?autostart=1`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
       setUploading(false);
