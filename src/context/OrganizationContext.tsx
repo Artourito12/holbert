@@ -93,6 +93,14 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({
   const createOrg: OrganizationContextType["createOrg"] = async (input) => {
     if (!user) return { org: null, error: "Non connecté" };
 
+    // Force un refresh de session pour eviter le cas "anon" si JWT cote client
+    // n'est plus envoye correctement (auth state stale).
+    const { data: refreshed } = await supabase.auth.getSession();
+    const currentUserId = refreshed?.session?.user?.id;
+    if (!currentUserId) {
+      return { org: null, error: "Session expirée — déconnectez-vous puis reconnectez-vous." };
+    }
+
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
       .insert({
@@ -100,7 +108,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({
         legal_form: input.legal_form || null,
         sector: input.sector || null,
         size_range: input.size_range || null,
-        created_by: user.id,
+        created_by: currentUserId,
       })
       .select()
       .single();
@@ -111,7 +119,7 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const { error: memberErr } = await supabase.from("org_members").insert({
       org_id: org.id,
-      user_id: user.id,
+      user_id: currentUserId,
       role: "owner",
     });
 
