@@ -2,9 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { SidebarProvider } from "./context/SidebarContext";
+import {
+  OrganizationProvider,
+  useOrganization,
+} from "./context/OrganizationContext";
 import AppLayout from "./layout/AppLayout";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -20,6 +25,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function OrgRequired({ children }: { children: React.ReactNode }) {
+  const { orgs, loading } = useOrganization();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-gray-500">
+        Chargement…
+      </div>
+    );
+  }
+  if (orgs.length === 0) return <Navigate to="/onboarding" replace />;
+  return <>{children}</>;
+}
+
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
   if (loading) return null;
@@ -32,42 +50,54 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <SidebarProvider>
-            <Routes>
-              <Route
-                path="/signin"
-                element={
-                  <PublicOnlyRoute>
-                    <SignIn />
-                  </PublicOnlyRoute>
-                }
-              />
-              <Route
-                path="/signup"
-                element={
-                  <PublicOnlyRoute>
-                    <SignUp />
-                  </PublicOnlyRoute>
-                }
-              />
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/dossiers" element={<Placeholder title="Dossiers" />} />
-                <Route path="/documents" element={<Placeholder title="Documents" />} />
-                <Route path="/contacts" element={<Placeholder title="Contacts" />} />
-                <Route path="/veille" element={<Placeholder title="Veille juridique" />} />
-                <Route path="/modeles" element={<Placeholder title="Modèles" />} />
-                <Route path="/assistant" element={<Placeholder title="Assistant IA" />} />
-                <Route path="/parametres" element={<Placeholder title="Paramètres" />} />
-              </Route>
-            </Routes>
-          </SidebarProvider>
+          <OrganizationProvider>
+            <SidebarProvider>
+              <Routes>
+                <Route
+                  path="/signin"
+                  element={
+                    <PublicOnlyRoute>
+                      <SignIn />
+                    </PublicOnlyRoute>
+                  }
+                />
+                <Route
+                  path="/signup"
+                  element={
+                    <PublicOnlyRoute>
+                      <SignUp />
+                    </PublicOnlyRoute>
+                  }
+                />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <ProtectedRoute>
+                      <CreateOrganization />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <OrgRequired>
+                        <AppLayout />
+                      </OrgRequired>
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/dossiers" element={<Placeholder title="Dossiers" />} />
+                  <Route path="/documents" element={<Placeholder title="Documents" />} />
+                  <Route path="/contacts" element={<Placeholder title="Contacts" />} />
+                  <Route path="/veille" element={<Placeholder title="Veille juridique" />} />
+                  <Route path="/modeles" element={<Placeholder title="Modèles" />} />
+                  <Route path="/assistant" element={<Placeholder title="Assistant IA" />} />
+                  <Route path="/parametres" element={<Placeholder title="Paramètres" />} />
+                </Route>
+              </Routes>
+            </SidebarProvider>
+          </OrganizationProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
