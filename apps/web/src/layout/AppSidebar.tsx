@@ -7,6 +7,7 @@ import {
   IconAssistant,
   IconBuilding,
   IconCalendar,
+  IconDocuments,
   IconNormer,
   IconPleiter,
   IconRaader,
@@ -28,6 +29,7 @@ export default function AppSidebar() {
   const menuItems: NavItem[] = [
     { to: "/", label: PLATFORM_NAME, icon: IconAssistant },
     { to: "/raader", label: MODULES.raader.name, icon: IconRaader },
+    { to: "/modeles", label: "Modèles d'actes", icon: IconDocuments },
     { to: "/echeancier", label: "Échéancier", icon: IconCalendar },
   ];
 

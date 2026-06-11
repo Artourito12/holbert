@@ -23,6 +23,7 @@ import DemandeDetail from "./pages/normer/DemandeDetail";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import Echeancier from "./pages/Echeancier";
+import Modeles from "./pages/Modeles";
 import Assistant from "./pages/Assistant";
 import Organisation from "./pages/Organisation";
 import UiKit from "./pages/UiKit";
@@ -93,6 +94,7 @@ export default function App() {
             <Route path="/documents" element={<Documents />} />
             <Route path="/documents/:id" element={<DocumentDetail />} />
             <Route path="/echeancier" element={<Echeancier />} />
+            <Route path="/modeles" element={<Modeles />} />
             <Route path="/organisation" element={<Organisation />} />
             {/* Outils Hofraad — ouverts à toutes les organisations (docs/09 §8) */}
             <Route path="/raader" element={<RaaderHub />} />

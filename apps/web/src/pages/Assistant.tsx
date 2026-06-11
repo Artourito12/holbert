@@ -7,6 +7,7 @@ import RechercheWidget from "../widgets/RechercheWidget";
 import AuditContexteWidget from "../widgets/AuditContexteWidget";
 import ContratAssistantWidget from "../widgets/ContratAssistantWidget";
 import CalculatriceDynamiqueWidget from "../widgets/CalculatriceDynamiqueWidget";
+import DocumentGenereWidget from "../widgets/DocumentGenereWidget";
 import { supabase } from "../lib/supabase";
 import { apiPost } from "../lib/api";
 import { useOrg } from "../context/OrgContext";
@@ -205,6 +206,12 @@ export default function Assistant() {
                         spec={(m.widget as unknown as Extract<Widget, { type: "calculatrice_dynamique" }>).spec}
                       />
                     )}
+                    {m.widget &&
+                      (m.widget as unknown as Widget).type === "document_genere" &&
+                      (() => {
+                        const w = m.widget as unknown as Extract<Widget, { type: "document_genere" }>;
+                        return <DocumentGenereWidget documentId={w.document_id} titre={w.titre} />;
+                      })()}
                     {m.sources_loi && m.sources_loi.length > 0 && (
                       <div className="mt-3 space-y-1.5 rounded-lg border border-gray-200 px-3 py-2.5 dark:border-gray-700">
                         <p className="text-xs font-medium uppercase text-gray-400">

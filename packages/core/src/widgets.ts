@@ -69,6 +69,12 @@ export type Widget =
       /** Calculateur ad hoc généré par l'IA (formules évaluées côté client, docs/09 §6). */
       type: "calculatrice_dynamique";
       spec: CalculatriceDynamiqueSpec;
+    }
+  | {
+      /** Acte rédigé dans la conversation (depuis un modèle du cabinet ou au format standard). */
+      type: "document_genere";
+      document_id: string;
+      titre: string;
     };
 
 export type ChampDynamique = {

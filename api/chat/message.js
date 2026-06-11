@@ -447,6 +447,105 @@ export default async function handler(req, res) {
         "Créons ce contrat ensemble. Je vais vous poser les questions nécessaires une à une — " +
         "uniquement celles qui comptent pour ce type de contrat, chacune avec son pourquoi. " +
         "Vous pouvez passer une question : le contrat portera alors la mention [À COMPLÉTER].";
+    } else if (intent.kind === "generation") {
+      // Acte / courrier : imiter les MODÈLES du cabinet quand il y en a (docs/10)
+      const { data: templates } = await admin
+        .from("actes_templates")
+        .select("id, nom_fichier, type_acte, description, analyse, texte")
+        .eq("org_id", org_id)
+        .eq("statut", "ready");
+
+      const profilGen = await contexteOrganisation(org_id);
+      let modele = null;
+      let modeleStyleSeul = false;
+
+      if (templates?.length) {
+        const choix = await structured({
+          model: MODEL_FAST,
+          system:
+            "Vous choisissez le modèle du cabinet le plus adapté pour rédiger l'acte demandé. " +
+            "match=exact si un modèle correspond à la nature de l'acte ; match=style si aucun ne " +
+            "correspond mais qu'on peut au moins reprendre l'identité visuelle et le style du cabinet " +
+            "depuis le modèle le plus proche ; match=aucun sinon.",
+          prompt:
+            `Acte demandé : ${texte}\n\nModèles disponibles :\n` +
+            templates
+              .map((t) => `- id=${t.id} | type=${t.type_acte} | ${t.nom_fichier} : ${t.description}`)
+              .join("\n"),
+          toolName: "choisir_modele",
+          description: "Choisit le modèle à imiter",
+          schema: {
+            type: "object",
+            properties: {
+              match: { type: "string", enum: ["exact", "style", "aucun"] },
+              template_id: { type: "string" },
+            },
+            required: ["match"],
+          },
+          maxTokens: 300,
+        });
+        modele = templates.find((t) => t.id === choix.template_id) ?? null;
+        modeleStyleSeul = choix.match === "style" && !!modele;
+        if (choix.match === "aucun") modele = null;
+      }
+
+      const systemGen =
+        "Vous rédigez des actes juridiques français de niveau professionnel, prêts à l'emploi. Règles :\n" +
+        "- Fondez chaque prétention sur ses textes et jurisprudences (citez précisément).\n" +
+        "- Pour toute donnée manquante : [À COMPLÉTER : description précise].\n" +
+        "- Markdown propre. Terminez par « Notes pour l'utilisateur » (envoi, délais, étape suivante).\n" +
+        (modele
+          ? modeleStyleSeul
+            ? "- Vous disposez d'un modèle du cabinet d'une AUTRE nature : reprenez-en fidèlement " +
+              "l'EN-TÊTE, le pied de page et le STYLE (ton, numérotation, formules), mais construisez " +
+              "la structure adaptée à l'acte demandé.\n"
+            : "- IMITEZ le modèle du cabinet fourni : même en-tête (reproduit à l'identique), même " +
+              "structure de sections, même style, mêmes formules. ADAPTEZ le contenu au cas présent : " +
+              "ajoutez ou retirez des sections si le cas l'exige — le modèle est un cadre, pas un carcan.\n"
+          : "");
+
+      const promptGen =
+        `Demande : ${texte}\n` +
+        profilGen +
+        (modele
+          ? `\nMODÈLE DU CABINET (${modele.nom_fichier}) :\n` +
+            `Analyse : ${JSON.stringify(modele.analyse)}\n` +
+            `Texte intégral du modèle :\n---\n${(modele.texte ?? "").slice(0, 25000)}\n---\n`
+          : "") +
+        `\nRédigez l'acte complet.`;
+
+      const contenuActe = await deepText({
+        system: systemGen,
+        prompt: promptGen,
+        thinkingBudget: 6000,
+        maxTokens: 12000,
+      });
+
+      const titreActe = `${(modele?.type_acte ?? intent.type_generation ?? "acte").replace(/_/g, " ")} — ${new Date().toLocaleDateString("fr-FR")}`;
+      const { data: genDoc } = await admin
+        .from("generated_documents")
+        .insert({
+          org_id,
+          type: modele ? `acte_modele_${modele.type_acte}` : "acte_libre",
+          titre: titreActe,
+          reponses: { demande: texte, template_id: modele?.id ?? null },
+          contenu: contenuActe,
+          created_by: auth.user.id,
+        })
+        .select()
+        .single();
+
+      widget = genDoc ? { type: "document_genere", document_id: genDoc.id, titre: genDoc.titre } : null;
+      contenu = modele
+        ? modeleStyleSeul
+          ? `J'ai rédigé l'acte en reprenant l'identité et le style de votre cabinet (d'après « ${modele.nom_fichier} »). ` +
+            `Vous n'avez pas encore de modèle pour ce type d'acte précis : déposez-en un dans ` +
+            `[Modèles d'actes](/modeles) et je le suivrai à la lettre la prochaine fois.`
+          : `J'ai rédigé l'acte en suivant votre modèle « ${modele.nom_fichier} » — en-tête, structure et ` +
+            `style du cabinet, adaptés au cas présent. Relisez et complétez les champs [À COMPLÉTER].`
+        : `J'ai rédigé l'acte au format professionnel standard. Pour que je reprenne l'en-tête, la ` +
+          `structure et le style exacts de votre cabinet, déposez vos propres modèles dans ` +
+          `[Modèles d'actes](/modeles) — je les imiterai systématiquement.`;
     } else if (intent.kind === "question" || intent.kind === "recherche_base" || intent.kind === "hors_perimetre") {
       const contexte = sources.length
         ? sources.map((s) => `[${s.n}] (${s.nom_fichier})\n${s.extrait}`).join("\n\n")
