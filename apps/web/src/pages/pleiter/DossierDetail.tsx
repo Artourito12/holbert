@@ -16,8 +16,9 @@ import { telechargerDocx } from "../../lib/docx";
 import { useAuth } from "../../context/AuthContext";
 import { useOrg } from "../../context/OrgContext";
 import RenduTexte from "../../components/RenduTexte";
+import ScanDossierTab from "./ScanDossierTab";
 
-type Onglet = "chronologie" | "pieces" | "analyses";
+type Onglet = "chronologie" | "pieces" | "scan" | "analyses";
 
 const ANALYSES_META: Record<AnalyseDossier["type"], { nom: string; desc: string }> = {
   vices: { nom: "Vices de procédure", desc: "Délais et formalités suspects, calculés sur la chronologie" },
@@ -256,6 +257,7 @@ export default function DossierDetail() {
           [
             ["chronologie", `Chronologie (${evenements.length})`],
             ["pieces", `Pièces & bordereau (${pieces.length})`],
+            ["scan", "Scan du dossier"],
             ["analyses", `Analyses (${analyses.length})`],
           ] as [Onglet, string][]
         ).map(([key, label]) => (
@@ -598,6 +600,9 @@ export default function DossierDetail() {
           )}
         </div>
       )}
+
+      {/* ===================== SCAN DU DOSSIER ===================== */}
+      {onglet === "scan" && <ScanDossierTab dossierId={dossier.id} nomDossier={dossier.nom} />}
 
       {/* ===================== ANALYSES ===================== */}
       {onglet === "analyses" && (

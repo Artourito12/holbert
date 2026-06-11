@@ -213,6 +213,24 @@ export type Piece = {
   created_at: string;
 };
 
+/** Scan complet d'un dossier contentieux par l'IA (docs/10 phase 2). */
+export type ScanDossier = {
+  id: string;
+  org_id: string;
+  dossier_id: string;
+  created_by: string;
+  contexte: string;
+  etapes: { id: string; label: string; statut: "a_faire" | "en_cours" | "fait" }[];
+  statut: "en_cours" | "terminee" | "erreur";
+  etape_courante: string | null;
+  progression: number;
+  document: string | null;
+  demarche: { etape: string; detail: string }[];
+  erreur: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type EvenementChronologie = {
   id: string;
   dossier_id: string;
