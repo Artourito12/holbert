@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import type {
   AnalyseDossier,
+  CampPiece,
   Document,
   Dossier,
   EvenementChronologie,
@@ -27,6 +28,12 @@ const ANALYSES_META: Record<AnalyseDossier["type"], { nom: string; desc: string 
 
 const GRAVITE_COLOR = { majeure: "error", moyenne: "warning", mineure: "light" } as const;
 
+const CAMPS: { id: CampPiece; label: string; prefixe: string; aide: string }[] = [
+  { id: "nous", label: "Nos pièces", prefixe: "n°", aide: "Bordereau officiel — numérotation continue" },
+  { id: "adverse", label: "Pièces adverses", prefixe: "Adv. n°", aide: "Produites par la partie adverse" },
+  { id: "procedure", label: "Actes de procédure", prefixe: "Acte n°", aide: "Assignations, conclusions, ordonnances…" },
+];
+
 const inputCls =
   "rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-500 focus:shadow-focus-ring dark:border-gray-700 dark:bg-gray-900 dark:text-white";
 
@@ -45,6 +52,9 @@ export default function DossierDetail() {
   const [loading, setLoading] = useState(true);
   const [travail, setTravail] = useState<string | null>(null);
   const [nouvelEvenement, setNouvelEvenement] = useState({ date: "", titre: "" });
+  const [campDepot, setCampDepot] = useState<CampPiece>("nous");
+  const [editionPiece, setEditionPiece] = useState<string | null>(null);
+  const [editionTexte, setEditionTexte] = useState("");
 
   const load = useCallback(async () => {
     if (!id || !currentOrg) return;
@@ -68,7 +78,9 @@ export default function DossierDetail() {
   // ---- Pièces ---------------------------------------------------------------
   const uploaderPieces = async (files: FileList) => {
     if (!dossier || !user || !currentOrg) return;
-    let prochainNumero = Math.max(0, ...pieces.map((p) => p.numero)) + 1;
+    const camp = campDepot;
+    let prochainNumero =
+      Math.max(0, ...pieces.filter((p) => p.camp === camp).map((p) => p.numero)) + 1;
     for (const file of Array.from(files)) {
       setTravail(`Pièce : ${file.name}`);
       try {
@@ -97,6 +109,7 @@ export default function DossierDetail() {
             dossier_id: dossier.id,
             org_id: currentOrg.id,
             document_id: docId,
+            camp,
             numero: prochainNumero,
             intitule: file.name.replace(/\.[^.]+$/, ""),
           })
@@ -106,11 +119,23 @@ export default function DossierDetail() {
         prochainNumero += 1;
 
         await apiPost("/api/documents/process", { document_id: docId });
+
+        // Classement IA : intitulé de bordereau + date portée par la pièce
+        setTravail(`Classement : ${file.name}`);
+        const c = await apiPost<{ date_trouvee: boolean; doublon_de: string | null; piece: Piece }>(
+          "/api/pleiter/classer-piece",
+          { piece_id: (piece as Piece).id }
+        );
+        if (c.doublon_de) toast.error(`${file.name} : attention, doublon probable d'une pièce déjà déposée`);
+        if (!c.date_trouvee) {
+          toast.error(`« ${c.piece.intitule} » : aucune date fiable trouvée — saisissez-la sur la pièce`);
+        }
+
         setTravail(`Chronologie : ${file.name}`);
         const r = await apiPost<{ evenements: number }>("/api/pleiter/extraire-evenements", {
           piece_id: (piece as Piece).id,
         });
-        toast.success(`${file.name} : ${r.evenements} événement(s) ajoutés à la chronologie`);
+        toast.success(`« ${c.piece.intitule} » : classée, ${r.evenements} événement(s) en chronologie`);
       } catch (e) {
         toast.error(`${file.name} : ${(e as Error).message}`);
       }
@@ -120,7 +145,7 @@ export default function DossierDetail() {
   };
 
   const renumeroter = async (piece: Piece, direction: -1 | 1) => {
-    const tri = [...pieces].sort((a, b) => a.numero - b.numero);
+    const tri = pieces.filter((p) => p.camp === piece.camp).sort((a, b) => a.numero - b.numero);
     const idx = tri.findIndex((p) => p.id === piece.id);
     const voisin = tri[idx + direction];
     if (!voisin) return;
@@ -131,14 +156,23 @@ export default function DossierDetail() {
     await load();
   };
 
+  const majPiece = async (pieceId: string, champs: Partial<Piece>) => {
+    const { error } = await supabase.from("pieces").update(champs).eq("id", pieceId);
+    if (error) toast.error(error.message);
+    await load();
+  };
+
   const exporterBordereau = () => {
     if (!dossier) return;
+    const dateFr = (d: string | null) =>
+      d ? ` (${new Date(d + "T00:00:00").toLocaleDateString("fr-FR")})` : "";
     const md =
-      `# Bordereau de pièces\n\n## ${dossier.nom}\n\n` +
+      `# Bordereau de pièces communiquées\n\n## ${dossier.nom}\n\n` +
       ([dossier.parties.demandeur, dossier.parties.defendeur].filter(Boolean).join(" c/ ") || "") +
       "\n\n" +
       pieces
-        .map((p) => `- **Pièce n° ${p.numero}** — ${p.intitule}${p.communiquee ? " *(communiquée)*" : ""}`)
+        .filter((p) => p.camp === "nous")
+        .map((p) => `- **Pièce n° ${p.numero}** — ${p.intitule}${dateFr(p.date_piece)}${p.communiquee ? " *(communiquée)*" : ""}`)
         .join("\n");
     void telechargerDocx(`Bordereau — ${dossier.nom}`, md);
   };
@@ -307,7 +341,7 @@ export default function DossierDetail() {
                         <div className="flex items-center gap-2">
                           {piece && (
                             <Badge size="sm" color="primary">
-                              Pièce n° {piece.numero}
+                              Pièce {CAMPS.find((c) => c.id === piece.camp)?.prefixe ?? "n°"} {piece.numero}
                             </Badge>
                           )}
                           <Badge size="sm" color={ev.origine === "ia" ? "info" : "light"}>
@@ -342,25 +376,49 @@ export default function DossierDetail() {
       {/* ===================== PIÈCES ===================== */}
       {onglet === "pieces" && (
         <div className="space-y-5">
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => inputRef.current?.click()}
-              className="h-11 rounded-lg bg-brand-500 px-5 text-sm font-medium text-white transition hover:bg-brand-600"
-            >
-              + Ajouter des pièces (PDF, DOCX, mails…)
-            </button>
-            <button
-              onClick={exporterBordereau}
-              disabled={pieces.length === 0}
-              className="h-11 rounded-lg border border-gray-200 px-5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              Exporter le bordereau (DOCX)
-            </button>
+          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <p className="mb-2 text-xs font-semibold uppercase text-gray-400">
+              Déposer dans :
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              {CAMPS.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setCampDepot(c.id)}
+                  title={c.aide}
+                  className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                    campDepot === c.id
+                      ? "border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-500/10"
+                      : "border-gray-200 text-gray-600 hover:border-brand-300 dark:border-gray-700 dark:text-gray-300"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+              <button
+                onClick={() => inputRef.current?.click()}
+                className="h-10 rounded-lg bg-brand-500 px-5 text-sm font-medium text-white transition hover:bg-brand-600"
+              >
+                + Déposer des fichiers
+              </button>
+              <button
+                onClick={exporterBordereau}
+                disabled={!pieces.some((p) => p.camp === "nous")}
+                className="h-10 rounded-lg border border-gray-200 px-5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Bordereau (DOCX)
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-400">
+              Déposez en vrac : l'IA lit chaque pièce, propose son intitulé de
+              bordereau, extrait sa date (sinon vous la saisissez) et alimente la
+              chronologie. La numérotation est propre à chaque camp.
+            </p>
             <input
               ref={inputRef}
               type="file"
               multiple
-              accept=".pdf,.docx,.doc,.txt,.eml"
+              accept=".pdf,.docx,.doc,.txt,.eml,.png,.jpg,.jpeg"
               className="hidden"
               onChange={(e) => {
                 if (e.target.files?.length) void uploaderPieces(e.target.files);
@@ -369,105 +427,175 @@ export default function DossierDetail() {
             />
           </div>
 
-          <section className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            {pieces.length === 0 ? (
-              <p className="px-5 py-10 text-center text-sm text-gray-500">
-                Aucune pièce. Déposez-les en vrac : numérotation automatique du
-                bordereau et extraction de la chronologie.
-              </p>
-            ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                {pieces.map((p, i) => (
-                  <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="inline-flex h-8 w-12 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-xs font-semibold text-brand-600 dark:bg-brand-500/10">
-                        n° {p.numero}
-                      </span>
-                      <div className="min-w-0">
-                        <Link
-                          to={`/documents/${p.document_id}`}
-                          className="block truncate text-sm font-medium text-gray-900 hover:text-brand-600 dark:text-white"
-                        >
-                          {p.intitule}
-                        </Link>
-                        <p className="text-xs text-gray-400">
-                          {p.documents?.statut === "ready"
-                            ? "Traitée"
-                            : p.documents?.statut === "error"
-                              ? "Erreur de traitement"
-                              : "Traitement en cours"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {/* Pont Raader (brief §7, 2+3) : auditer le contrat litigieux sans rupture */}
-                      {hasModule("raader") &&
-                        p.documents?.statut === "ready" &&
-                        (REFERENTIELS_REGISTRY.find((r) => r.id === p.documents?.type_confirme)?.roles
-                          .length ?? 0) > 0 && (
-                          <Link
-                            to={`/documents/${p.document_id}`}
-                            className="rounded-lg border border-brand-200 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-25 dark:border-brand-500/30"
-                            title="Contrat reconnu : audit clause par clause via Raader"
-                          >
-                            Auditer
-                          </Link>
-                        )}
-                      <button
-                        onClick={() => void renumeroter(p, -1)}
-                        disabled={i === 0}
-                        className="rounded px-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                        title="Monter"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        onClick={() => void renumeroter(p, 1)}
-                        disabled={i === pieces.length - 1}
-                        className="rounded px-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
-                        title="Descendre"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        onClick={async () => {
-                          setTravail(`Chronologie : ${p.intitule}`);
-                          try {
-                            const r = await apiPost<{ evenements: number }>(
-                              "/api/pleiter/extraire-evenements",
-                              { piece_id: p.id }
-                            );
-                            toast.success(`${r.evenements} événement(s) extraits`);
-                          } catch (e) {
-                            toast.error((e as Error).message);
-                          }
-                          setTravail(null);
-                          await load();
-                        }}
-                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300"
-                      >
-                        Extraire la chronologie
-                      </button>
-                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-500">
-                        <input
-                          type="checkbox"
-                          checked={p.communiquee}
-                          onChange={async (e) => {
-                            await supabase
-                              .from("pieces")
-                              .update({ communiquee: e.target.checked })
-                              .eq("id", p.id);
-                            await load();
-                          }}
-                        />
-                        Communiquée
-                      </label>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          {pieces.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-gray-300 bg-white px-5 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900">
+              Aucune pièce pour l'instant.
+            </p>
+          ) : (
+            CAMPS.map((campMeta) => {
+              const liste = pieces
+                .filter((p) => p.camp === campMeta.id)
+                .sort((a, b) => a.numero - b.numero);
+              if (liste.length === 0) return null;
+              return (
+                <section
+                  key={campMeta.id}
+                  className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                >
+                  <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3 dark:border-gray-800">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {campMeta.label} ({liste.length})
+                    </h3>
+                    <p className="text-xs text-gray-400">{campMeta.aide}</p>
+                  </div>
+                  <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {liste.map((p, i) => (
+                      <li key={p.id} className="px-5 py-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <span className="inline-flex h-8 min-w-14 shrink-0 items-center justify-center rounded-lg bg-brand-50 px-2 text-xs font-semibold text-brand-600 dark:bg-brand-500/10">
+                              {campMeta.prefixe} {p.numero}
+                            </span>
+                            <div className="min-w-0">
+                              {editionPiece === p.id ? (
+                                <input
+                                  autoFocus
+                                  value={editionTexte}
+                                  onChange={(e) => setEditionTexte(e.target.value)}
+                                  onBlur={() => {
+                                    if (editionTexte.trim().length >= 2) {
+                                      void majPiece(p.id, { intitule: editionTexte.trim() });
+                                    }
+                                    setEditionPiece(null);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                    if (e.key === "Escape") setEditionPiece(null);
+                                  }}
+                                  className={`${inputCls} w-96 max-w-full py-1`}
+                                />
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <Link
+                                    to={`/documents/${p.document_id}`}
+                                    className="block truncate text-sm font-medium text-gray-900 hover:text-brand-600 dark:text-white"
+                                  >
+                                    {p.intitule}
+                                  </Link>
+                                  <button
+                                    onClick={() => {
+                                      setEditionPiece(p.id);
+                                      setEditionTexte(p.intitule);
+                                    }}
+                                    className="shrink-0 text-xs text-gray-300 hover:text-brand-600"
+                                    title="Renommer l'intitulé de bordereau"
+                                  >
+                                    ✎
+                                  </button>
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-400">
+                                {p.documents?.statut === "ready"
+                                  ? "Traitée"
+                                  : p.documents?.statut === "error"
+                                    ? "Erreur de traitement"
+                                    : "Traitement en cours"}
+                                {p.documents?.version_de && (
+                                  <span className="ml-2 font-medium text-warning-600">Doublon probable</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {p.date_piece ? (
+                              <input
+                                type="date"
+                                value={p.date_piece}
+                                onChange={(e) =>
+                                  e.target.value && void majPiece(p.id, { date_piece: e.target.value })
+                                }
+                                className="rounded-lg border border-gray-200 px-2 py-1 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
+                                title="Date portée par la pièce"
+                              />
+                            ) : (
+                              <span className="flex items-center gap-1.5 rounded-lg bg-warning-50 px-2 py-1 text-xs font-medium text-warning-700 dark:bg-warning-500/10">
+                                À dater :
+                                <input
+                                  type="date"
+                                  onChange={(e) =>
+                                    e.target.value && void majPiece(p.id, { date_piece: e.target.value })
+                                  }
+                                  className="rounded border border-warning-200 bg-white px-1 py-0.5 text-xs dark:bg-gray-900"
+                                />
+                              </span>
+                            )}
+                            {/* Pont Raader : auditer le contrat litigieux sans rupture */}
+                            {hasModule("raader") &&
+                              p.documents?.statut === "ready" &&
+                              (REFERENTIELS_REGISTRY.find((r) => r.id === p.documents?.type_confirme)?.roles
+                                .length ?? 0) > 0 && (
+                                <Link
+                                  to={`/documents/${p.document_id}`}
+                                  className="rounded-lg border border-brand-200 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-25 dark:border-brand-500/30"
+                                  title="Contrat reconnu : audit clause par clause"
+                                >
+                                  Auditer
+                                </Link>
+                              )}
+                            <button
+                              onClick={() => void renumeroter(p, -1)}
+                              disabled={i === 0}
+                              className="rounded px-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                              title="Monter"
+                            >
+                              ↑
+                            </button>
+                            <button
+                              onClick={() => void renumeroter(p, 1)}
+                              disabled={i === liste.length - 1}
+                              className="rounded px-1.5 text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                              title="Descendre"
+                            >
+                              ↓
+                            </button>
+                            <button
+                              onClick={async () => {
+                                setTravail(`Chronologie : ${p.intitule}`);
+                                try {
+                                  const r = await apiPost<{ evenements: number }>(
+                                    "/api/pleiter/extraire-evenements",
+                                    { piece_id: p.id }
+                                  );
+                                  toast.success(`${r.evenements} événement(s) extraits`);
+                                } catch (e) {
+                                  toast.error((e as Error).message);
+                                }
+                                setTravail(null);
+                                await load();
+                              }}
+                              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300"
+                            >
+                              Chronologie
+                            </button>
+                            {p.camp === "nous" && (
+                              <label className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-500">
+                                <input
+                                  type="checkbox"
+                                  checked={p.communiquee}
+                                  onChange={(e) => void majPiece(p.id, { communiquee: e.target.checked })}
+                                />
+                                Communiquée
+                              </label>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })
+          )}
         </div>
       )}
 

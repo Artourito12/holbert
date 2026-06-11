@@ -194,13 +194,21 @@ export type Dossier = {
   created_at: string;
 };
 
+/** Camp d'une pièce : les nôtres (bordereau), celles de l'adversaire, les actes de procédure. */
+export type CampPiece = "nous" | "adverse" | "procedure";
+
 export type Piece = {
   id: string;
   dossier_id: string;
   org_id: string;
   document_id: string;
+  camp: CampPiece;
   numero: number;
   intitule: string;
+  /** Intitulé de bordereau proposé par l'IA après lecture de la pièce. */
+  titre_propose: string | null;
+  /** Date portée par la pièce (extraite par l'IA, sinon saisie par l'utilisateur). */
+  date_piece: string | null;
   communiquee: boolean;
   created_at: string;
 };
