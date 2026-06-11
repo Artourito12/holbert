@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ChevronDown } from "lucide-react";
 import { useOrganization } from "../context/OrganizationContext";
+import { supabase } from "../lib/supabase";
 
 const LEGAL_FORMS = ["SAS", "SARL", "SA", "SASU", "EURL", "EI", "Cabinet individuel", "Association", "Autre"];
 const SIZE_RANGES = [
@@ -21,6 +22,67 @@ export default function CreateOrganization() {
   const [sizeRange, setSizeRange] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [debugOutput, setDebugOutput] = useState<string | null>(null);
+
+  const runDebug = async () => {
+    setDebugOutput("Test en cours...");
+    const lines: string[] = [];
+    try {
+      // 1. Session via supabase client
+      const { data: { session } } = await supabase.auth.getSession();
+      lines.push(`Session client : ${session ? "PRESENTE" : "MANQUANTE"}`);
+      if (session) {
+        const payload = JSON.parse(atob(session.access_token.split(".")[1]));
+        lines.push(`  role: ${payload.role}`);
+        lines.push(`  sub: ${payload.sub}`);
+        lines.push(`  expired: ${payload.exp * 1000 < Date.now()}`);
+      }
+
+      // 2. Test INSERT direct avec fetch (bypass supabase client)
+      if (session) {
+        const url = "https://suhghidfhekfpozdbjzv.supabase.co/rest/v1/organizations?select=*";
+        const anon = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1aGdoaWRmaGVrZnBvemRianp2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMDY4MzksImV4cCI6MjA5NjY4MjgzOX0.rZSrOQnDOhRL5MKOkWuAPl64GiW7PLEr0hZMK5I0KDI";
+        const r = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + session.access_token,
+            apikey: anon,
+            "Content-Type": "application/json",
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify({ name: "Test debug", created_by: session.user.id }),
+        });
+        const body = await r.text();
+        lines.push("");
+        lines.push(`Test INSERT direct (fetch) : ${r.status}`);
+        lines.push(`Body: ${body.substring(0, 500)}`);
+      }
+
+      // 3. Test INSERT via supabase client
+      lines.push("");
+      lines.push("Test INSERT via supabase client...");
+      const { data: ses2 } = await supabase.auth.getSession();
+      const userId = ses2.session?.user?.id;
+      if (userId) {
+        const { data, error } = await supabase
+          .from("organizations")
+          .insert({ name: "Test debug client", created_by: userId })
+          .select()
+          .single();
+        if (error) {
+          lines.push(`  Erreur: ${error.message}`);
+          lines.push(`  Code: ${error.code}`);
+          lines.push(`  Hint: ${error.hint ?? "—"}`);
+          lines.push(`  Details: ${error.details ?? "—"}`);
+        } else {
+          lines.push(`  OK ! org créée: ${(data as any)?.id}`);
+        }
+      }
+    } catch (e) {
+      lines.push(`Exception: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    setDebugOutput(lines.join("\n"));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,6 +216,21 @@ export default function CreateOrganization() {
           >
             {loading ? "Création…" : "Créer mon espace"}
           </button>
+
+          <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={runDebug}
+              className="text-xs text-gray-500 underline hover:text-gray-900"
+            >
+              🐛 Lancer le diagnostic RLS
+            </button>
+            {debugOutput && (
+              <pre className="mt-3 max-h-80 overflow-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100 whitespace-pre-wrap">
+                {debugOutput}
+              </pre>
+            )}
+          </div>
         </form>
       </div>
     </div>
