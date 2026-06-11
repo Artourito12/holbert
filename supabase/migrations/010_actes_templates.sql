@@ -1,6 +1,6 @@
--- 010 — Modèles d'actes fournis par l'utilisateur, analysés par l'IA
--- (structure, en-tête, champs variables, style) puis imités à la génération.
--- Idempotent.
+/* 010 — Modeles d'actes fournis par l'utilisateur, analyses par l'IA
+   (structure, en-tete, champs variables, style) puis imites a la generation.
+   Idempotent. Commentaires en bloc pour survivre aux copier-coller. */
 
 create table if not exists actes_templates (
   id uuid primary key default gen_random_uuid(),
@@ -8,7 +8,6 @@ create table if not exists actes_templates (
   nom_fichier text not null,
   storage_path text not null,
   mime text not null,
-  -- Renseignés par l'analyse IA
   type_acte text,
   description text,
   texte text,
@@ -36,7 +35,7 @@ drop policy if exists "templates delete membres" on actes_templates;
 create policy "templates delete membres" on actes_templates
   for delete using (is_org_member(org_id));
 
--- Les mises à jour (analyse) passent par la service role uniquement.
+/* Les mises a jour (analyse) passent par la service role uniquement. */
 
 drop trigger if exists actes_templates_touch on actes_templates;
 create trigger actes_templates_touch

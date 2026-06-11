@@ -1,7 +1,7 @@
--- ============================================================================
--- 009_recherches.sql — Hofraad : recherche approfondie asynchrone (docs/09 §4)
--- Script IDEMPOTENT.
--- ============================================================================
+/* ============================================================================
+   009_recherches.sql — Hofraad : recherche approfondie asynchrone (docs/09 §4)
+   Script IDEMPOTENT. Commentaires en bloc pour survivre aux copier-coller.
+   ============================================================================ */
 
 drop table if exists public.recherches cascade;
 
@@ -12,7 +12,6 @@ create table public.recherches (
   created_by        uuid not null references auth.users (id),
   question_initiale text not null,
   comprehension     text,
-  -- [{ id, question, justification, statut: a_faire|fait, section, sources: [...] }]
   questions         jsonb not null default '[]'::jsonb,
   statut            text not null default 'attente_validation'
                     check (statut in ('attente_validation', 'en_cours', 'terminee', 'erreur')),
@@ -35,4 +34,7 @@ alter table public.recherches enable row level security;
 
 create policy recherches_select on public.recherches
   for select using (public.is_org_member(org_id));
--- Écritures via les fonctions serverless (service role) uniquement.
+
+/* Ecritures via les fonctions serverless (service role) uniquement.
+   Le champ questions contient des objets
+   { id, question, justification, statut: a_faire|fait, section, sources } */
