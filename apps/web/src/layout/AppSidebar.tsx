@@ -4,7 +4,10 @@ import { useSidebar } from "../context/SidebarContext";
 import { useOrg } from "../context/OrgContext";
 import {
   IconAdmin,
+  IconAssistant,
+  IconCalendar,
   IconDashboard,
+  IconDocuments,
   IconNormer,
   IconPleiter,
   IconRaader,
@@ -25,6 +28,9 @@ export default function AppSidebar() {
 
   const menuItems: NavItem[] = [
     { to: "/", label: "Tableau de bord", icon: IconDashboard },
+    { to: "/assistant", label: "Assistant", icon: IconAssistant },
+    { to: "/documents", label: "Documents", icon: IconDocuments },
+    { to: "/echeancier", label: "Échéancier", icon: IconCalendar },
   ];
 
   const moduleItems: NavItem[] = [

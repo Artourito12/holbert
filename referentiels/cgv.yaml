@@ -1,0 +1,118 @@
+meta:
+  id: cgv
+  version: 1
+  nom: "Conditions générales de vente (CGV)"
+  famille: conditions-generales
+
+identification:
+  indices:
+    - "conditions générales de vente"
+    - "CGV"
+    - "les présentes conditions"
+    - "passation de commande"
+    - "droit de rétractation"
+    - "réserve de propriété"
+    - "le vendeur"
+    - "l'acheteur"
+  pieges_confusion:
+    - cgu                  # conditions d'utilisation d'un service, pas de vente
+    - conditions-generales-achat
+
+roles: [vendeur, acheteur]
+
+extraction:
+  faits:
+    - id: emetteur
+      type: parties
+      libelle: "Société émettrice des CGV (identité, SIREN, contact)"
+      requis: true
+    - id: public_vise
+      type: texte
+      libelle: "Public visé : consommateurs (B2C), professionnels (B2B) ou mixte"
+      requis: true
+    - id: date_version
+      type: date
+      libelle: "Date ou version des CGV"
+    - id: delais_paiement
+      type: texte
+      libelle: "Délais de paiement et pénalités de retard"
+    - id: indemnite_recouvrement
+      type: montant
+      libelle: "Indemnité forfaitaire de recouvrement (40 € en B2B)"
+    - id: delai_retractation
+      type: duree
+      libelle: "Délai de rétractation (B2C : 14 jours)"
+    - id: garanties
+      type: texte
+      libelle: "Garanties (légale de conformité, vices cachés, commerciale)"
+    - id: livraison
+      type: texte
+      libelle: "Délais et modalités de livraison, transfert des risques"
+    - id: juridiction
+      type: texte
+      libelle: "Droit applicable et juridiction compétente"
+
+clauses_attendues:
+  - id: prix_paiement
+    libelle: "Conditions de règlement, pénalités de retard et indemnité de 40 €"
+    gravite_si_absente: majeure
+    fondement: "art. L. 441-1 et D. 441-5 c. com. — mentions obligatoires, amende administrative"
+  - id: delais_paiement_lme
+    libelle: "Délais de paiement conformes (60 jours / 45 jours fin de mois)"
+    gravite_si_absente: majeure
+    fondement: "art. L. 441-10 c. com. (LME)"
+  - id: retractation_b2c
+    libelle: "Information sur le droit de rétractation de 14 jours (si B2C à distance)"
+    gravite_si_absente: majeure
+    fondement: "art. L. 221-18 c. consom. — défaut d'information : délai porté à 12 mois"
+  - id: garanties_legales_b2c
+    libelle: "Encadré sur les garanties légales (si B2C)"
+    gravite_si_absente: majeure
+    fondement: "art. L. 217-1 s. c. consom. ; mention obligatoire D. 211-2"
+  - id: mediation_b2c
+    libelle: "Coordonnées du médiateur de la consommation (si B2C)"
+    gravite_si_absente: majeure
+    fondement: "art. L. 612-1 c. consom."
+  - id: reserve_propriete
+    libelle: "Clause de réserve de propriété"
+    gravite_si_absente: moyenne
+    fondement: "art. 2367 c. civ. — protection essentielle en cas d'impayé"
+  - id: force_majeure
+    libelle: "Clause de force majeure"
+    gravite_si_absente: mineure
+    fondement: "art. 1218 c. civ."
+
+clauses_pieges:
+  - id: clauses_abusives_noires
+    libelle: "Clauses présumées abusives de manière irréfragable (B2C)"
+    detection: "Suppression du droit à réparation, modification unilatérale du prix, etc."
+    gravite: majeure
+    fondement: "art. R. 212-1 c. consom. (liste noire) — clauses réputées non écrites"
+  - id: retractation_exclue_a_tort
+    libelle: "Exclusion du droit de rétractation hors cas légaux"
+    detection: "Exclusion générale alors que les exceptions de L. 221-28 ne s'appliquent pas"
+    gravite: majeure
+    fondement: "art. L. 221-28 c. consom. — exceptions limitatives"
+  - id: desequilibre_b2b
+    libelle: "Déséquilibre significatif entre professionnels"
+    detection: "Clauses exorbitantes imposées sans contrepartie (résiliation unilatérale, pénalités asymétriques)"
+    gravite: moyenne
+    fondement: "art. L. 442-1, I, 2° c. com."
+  - id: tribunal_incompetent_b2c
+    libelle: "Clause attributive de juridiction opposée à un consommateur"
+    detection: "Attribution exclusive à un tribunal donné dans des CGV B2C"
+    gravite: moyenne
+    fondement: "art. R. 212-2, 10° c. consom. ; art. 48 CPC"
+
+questions:
+  vendeur:
+    - id: canal
+      question: "Vendez-vous en ligne, à distance ou uniquement en face à face ?"
+      pourquoi: "La vente à distance B2C déclenche le formalisme de la rétractation et de l'information précontractuelle."
+    - id: cible
+      question: "Vos clients sont-ils des particuliers, des professionnels ou les deux ?"
+      pourquoi: "Le droit de la consommation impose des mentions spécifiques ; des CGV mixtes mal séparées sont le défaut le plus fréquent."
+  acheteur:
+    - id: negociation
+      question: "Souhaitez-vous négocier des conditions particulières (les CGV ne sont qu'un socle) ?"
+      pourquoi: "En B2B, les CGV constituent le socle unique de la négociation (L. 441-1) — tout est discutable."

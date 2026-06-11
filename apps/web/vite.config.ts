@@ -18,6 +18,12 @@ export default defineConfig({
   ],
   // .env.local vit à la racine du repo (partagé avec les fonctions api/)
   envDir: root,
+  server: {
+    // En dev, les fonctions serverless tournent via `npm run dev:api` (vercel dev)
+    proxy: {
+      "/api": "http://localhost:3000",
+    },
+  },
   resolve: {
     alias: [
       { find: /^@holbert\/ui$/, replacement: path.join(root, "packages/ui/src/index.ts") },

@@ -1,0 +1,696 @@
+{
+  "bail-commercial": {
+    "meta": {
+      "id": "bail-commercial",
+      "version": 1,
+      "nom": "Bail commercial",
+      "famille": "baux"
+    },
+    "identification": {
+      "indices": [
+        "bail commercial",
+        "locaux à usage commercial",
+        "statut des baux commerciaux",
+        "articles L. 145-1 et suivants du code de commerce",
+        "indice des loyers commerciaux",
+        "ILC",
+        "ILAT",
+        "déspécialisation",
+        "propriété commerciale",
+        "fonds de commerce exploité dans les lieux"
+      ],
+      "pieges_confusion": [
+        "bail-professionnel",
+        "bail-habitation",
+        "bail-derogatoire"
+      ]
+    },
+    "roles": [
+      "bailleur",
+      "preneur"
+    ],
+    "extraction": {
+      "faits": [
+        {
+          "id": "parties",
+          "type": "parties",
+          "libelle": "Bailleur et preneur (identités complètes, SIREN si sociétés)",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "locaux",
+          "type": "texte",
+          "libelle": "Désignation des locaux loués (adresse, surface, lots)",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "destination",
+          "type": "texte",
+          "libelle": "Destination contractuelle des lieux (activités autorisées)",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "date_signature",
+          "type": "date",
+          "libelle": "Date de signature",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "date_prise_effet",
+          "type": "date",
+          "libelle": "Date de prise d'effet du bail",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "duree",
+          "type": "duree",
+          "libelle": "Durée du bail (9 ans minimum sauf dérogatoire)",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "echeance_triennale_1",
+          "type": "date",
+          "libelle": "Première échéance triennale (faculté de résiliation du preneur, L. 145-4)",
+          "requis": false,
+          "alimente_echeancier": true,
+          "alerte": [
+            365,
+            270,
+            210
+          ]
+        },
+        {
+          "id": "fin_bail",
+          "type": "date",
+          "libelle": "Terme du bail (enjeu : renouvellement / congé)",
+          "requis": false,
+          "alimente_echeancier": true,
+          "alerte": [
+            365,
+            270,
+            180
+          ]
+        },
+        {
+          "id": "loyer_annuel",
+          "type": "montant",
+          "libelle": "Loyer annuel HT/HC",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "indexation",
+          "type": "texte",
+          "libelle": "Clause d'indexation : indice (ILC/ILAT), périodicité, date de révision",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "depot_garantie",
+          "type": "montant",
+          "libelle": "Dépôt de garantie",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "charges_et_606",
+          "type": "texte",
+          "libelle": "Répartition des charges, impôts et travaux (inventaire Pinel, art. 606 c. civ.)",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "garanties",
+          "type": "texte",
+          "libelle": "Garanties exigées (caution, GAPD, garantie à première demande)",
+          "requis": false,
+          "alimente_echeancier": false
+        }
+      ]
+    },
+    "clauses_attendues": [
+      {
+        "id": "destination",
+        "libelle": "Clause de destination précise",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 145-47 c. com. (déspécialisation)"
+      },
+      {
+        "id": "repartition_charges",
+        "libelle": "Inventaire précis des charges et leur répartition",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 145-40-2 c. com. (loi Pinel) — inventaire obligatoire"
+      },
+      {
+        "id": "indexation",
+        "libelle": "Clause d'indexation sur ILC ou ILAT",
+        "gravite_si_absente": "moyenne",
+        "fondement": "art. L. 112-2 c. mon. fin. (indice licite en lien avec l'activité)"
+      },
+      {
+        "id": "etat_des_lieux",
+        "libelle": "État des lieux d'entrée",
+        "gravite_si_absente": "moyenne",
+        "fondement": "art. L. 145-40-1 c. com."
+      },
+      {
+        "id": "sort_travaux_ameliorations",
+        "libelle": "Sort des travaux et améliorations en fin de bail",
+        "gravite_si_absente": "moyenne"
+      }
+    ],
+    "clauses_pieges": [
+      {
+        "id": "duree_ferme_deguisee",
+        "libelle": "Renonciation du preneur aux facultés de résiliation triennale",
+        "detection": "Renonciation aux échéances triennales hors cas autorisés (bail > 9 ans, locaux monovalents, bureaux : L. 145-4 al. 2)",
+        "gravite": "majeure",
+        "fondement": "art. L. 145-4 c. com. — clause réputée non écrite hors exceptions"
+      },
+      {
+        "id": "indexation_asymetrique",
+        "libelle": "Indexation ne jouant qu'à la hausse",
+        "detection": "Clause d'échelle mobile excluant la baisse de l'indice",
+        "gravite": "majeure",
+        "fondement": "Cass. 3e civ., 30 juin 2021, n° 19-23.038 — clause réputée non écrite"
+      },
+      {
+        "id": "transfert_606",
+        "libelle": "Transfert au preneur des grosses réparations (art. 606)",
+        "detection": "Charges, travaux ou honoraires imputés au preneur en violation de R. 145-35",
+        "gravite": "majeure",
+        "fondement": "art. R. 145-35 c. com. (post-Pinel) — répartition impérative"
+      },
+      {
+        "id": "clause_recette_sans_minimum",
+        "libelle": "Loyer variable privant le preneur du statut",
+        "detection": "Loyer intégralement variable sans clause de sauvegarde",
+        "gravite": "moyenne"
+      }
+    ],
+    "questions": {
+      "bailleur": [
+        {
+          "id": "objectif",
+          "question": "Souhaitez-vous sécuriser un revenu long terme ou garder la possibilité de récupérer les locaux ?",
+          "pourquoi": "Oriente la durée ferme, les garanties et la clause de destination."
+        },
+        {
+          "id": "solvabilite",
+          "question": "Quelles garanties le preneur peut-il fournir (caution, garantie bancaire) ?",
+          "pourquoi": "Le dépôt de garantie seul couvre rarement plus d'un trimestre d'impayés."
+        }
+      ],
+      "preneur": [
+        {
+          "id": "evolution_activite",
+          "question": "Votre activité peut-elle évoluer dans les 9 prochaines années ?",
+          "pourquoi": "Une destination trop étroite bloque toute diversification sans accord du bailleur."
+        },
+        {
+          "id": "sortie",
+          "question": "Avez-vous besoin de flexibilité pour quitter les locaux avant 9 ans ?",
+          "pourquoi": "Les échéances triennales sont votre seule porte de sortie sans frais — vérifier qu'elles ne sont pas neutralisées."
+        }
+      ]
+    }
+  },
+  "cgv": {
+    "meta": {
+      "id": "cgv",
+      "version": 1,
+      "nom": "Conditions générales de vente (CGV)",
+      "famille": "conditions-generales"
+    },
+    "identification": {
+      "indices": [
+        "conditions générales de vente",
+        "CGV",
+        "les présentes conditions",
+        "passation de commande",
+        "droit de rétractation",
+        "réserve de propriété",
+        "le vendeur",
+        "l'acheteur"
+      ],
+      "pieges_confusion": [
+        "cgu",
+        "conditions-generales-achat"
+      ]
+    },
+    "roles": [
+      "vendeur",
+      "acheteur"
+    ],
+    "extraction": {
+      "faits": [
+        {
+          "id": "emetteur",
+          "type": "parties",
+          "libelle": "Société émettrice des CGV (identité, SIREN, contact)",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "public_vise",
+          "type": "texte",
+          "libelle": "Public visé : consommateurs (B2C), professionnels (B2B) ou mixte",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "date_version",
+          "type": "date",
+          "libelle": "Date ou version des CGV",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "delais_paiement",
+          "type": "texte",
+          "libelle": "Délais de paiement et pénalités de retard",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "indemnite_recouvrement",
+          "type": "montant",
+          "libelle": "Indemnité forfaitaire de recouvrement (40 € en B2B)",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "delai_retractation",
+          "type": "duree",
+          "libelle": "Délai de rétractation (B2C : 14 jours)",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "garanties",
+          "type": "texte",
+          "libelle": "Garanties (légale de conformité, vices cachés, commerciale)",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "livraison",
+          "type": "texte",
+          "libelle": "Délais et modalités de livraison, transfert des risques",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "juridiction",
+          "type": "texte",
+          "libelle": "Droit applicable et juridiction compétente",
+          "requis": false,
+          "alimente_echeancier": false
+        }
+      ]
+    },
+    "clauses_attendues": [
+      {
+        "id": "prix_paiement",
+        "libelle": "Conditions de règlement, pénalités de retard et indemnité de 40 €",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 441-1 et D. 441-5 c. com. — mentions obligatoires, amende administrative"
+      },
+      {
+        "id": "delais_paiement_lme",
+        "libelle": "Délais de paiement conformes (60 jours / 45 jours fin de mois)",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 441-10 c. com. (LME)"
+      },
+      {
+        "id": "retractation_b2c",
+        "libelle": "Information sur le droit de rétractation de 14 jours (si B2C à distance)",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 221-18 c. consom. — défaut d'information : délai porté à 12 mois"
+      },
+      {
+        "id": "garanties_legales_b2c",
+        "libelle": "Encadré sur les garanties légales (si B2C)",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 217-1 s. c. consom. ; mention obligatoire D. 211-2"
+      },
+      {
+        "id": "mediation_b2c",
+        "libelle": "Coordonnées du médiateur de la consommation (si B2C)",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 612-1 c. consom."
+      },
+      {
+        "id": "reserve_propriete",
+        "libelle": "Clause de réserve de propriété",
+        "gravite_si_absente": "moyenne",
+        "fondement": "art. 2367 c. civ. — protection essentielle en cas d'impayé"
+      },
+      {
+        "id": "force_majeure",
+        "libelle": "Clause de force majeure",
+        "gravite_si_absente": "mineure",
+        "fondement": "art. 1218 c. civ."
+      }
+    ],
+    "clauses_pieges": [
+      {
+        "id": "clauses_abusives_noires",
+        "libelle": "Clauses présumées abusives de manière irréfragable (B2C)",
+        "detection": "Suppression du droit à réparation, modification unilatérale du prix, etc.",
+        "gravite": "majeure",
+        "fondement": "art. R. 212-1 c. consom. (liste noire) — clauses réputées non écrites"
+      },
+      {
+        "id": "retractation_exclue_a_tort",
+        "libelle": "Exclusion du droit de rétractation hors cas légaux",
+        "detection": "Exclusion générale alors que les exceptions de L. 221-28 ne s'appliquent pas",
+        "gravite": "majeure",
+        "fondement": "art. L. 221-28 c. consom. — exceptions limitatives"
+      },
+      {
+        "id": "desequilibre_b2b",
+        "libelle": "Déséquilibre significatif entre professionnels",
+        "detection": "Clauses exorbitantes imposées sans contrepartie (résiliation unilatérale, pénalités asymétriques)",
+        "gravite": "moyenne",
+        "fondement": "art. L. 442-1, I, 2° c. com."
+      },
+      {
+        "id": "tribunal_incompetent_b2c",
+        "libelle": "Clause attributive de juridiction opposée à un consommateur",
+        "detection": "Attribution exclusive à un tribunal donné dans des CGV B2C",
+        "gravite": "moyenne",
+        "fondement": "art. R. 212-2, 10° c. consom. ; art. 48 CPC"
+      }
+    ],
+    "questions": {
+      "vendeur": [
+        {
+          "id": "canal",
+          "question": "Vendez-vous en ligne, à distance ou uniquement en face à face ?",
+          "pourquoi": "La vente à distance B2C déclenche le formalisme de la rétractation et de l'information précontractuelle."
+        },
+        {
+          "id": "cible",
+          "question": "Vos clients sont-ils des particuliers, des professionnels ou les deux ?",
+          "pourquoi": "Le droit de la consommation impose des mentions spécifiques ; des CGV mixtes mal séparées sont le défaut le plus fréquent."
+        }
+      ],
+      "acheteur": [
+        {
+          "id": "negociation",
+          "question": "Souhaitez-vous négocier des conditions particulières (les CGV ne sont qu'un socle) ?",
+          "pourquoi": "En B2B, les CGV constituent le socle unique de la négociation (L. 441-1) — tout est discutable."
+        }
+      ]
+    }
+  },
+  "prestation-services": {
+    "meta": {
+      "id": "prestation-services",
+      "version": 1,
+      "nom": "Contrat de prestation de services",
+      "famille": "prestataires"
+    },
+    "identification": {
+      "indices": [
+        "contrat de prestation de services",
+        "le prestataire",
+        "le client",
+        "cahier des charges",
+        "livrables",
+        "obligation de moyens",
+        "freelance",
+        "mission",
+        "honoraires"
+      ],
+      "pieges_confusion": [
+        "contrat-travail",
+        "contrat-sous-traitance",
+        "contrat-agence-commerciale"
+      ]
+    },
+    "roles": [
+      "prestataire",
+      "client"
+    ],
+    "extraction": {
+      "faits": [
+        {
+          "id": "parties",
+          "type": "parties",
+          "libelle": "Prestataire et client (identités, SIREN)",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "objet",
+          "type": "texte",
+          "libelle": "Objet de la prestation et livrables attendus",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "prix",
+          "type": "montant",
+          "libelle": "Prix (forfait / régie, HT, modalités de facturation)",
+          "requis": true,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "date_signature",
+          "type": "date",
+          "libelle": "Date de signature",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "date_debut",
+          "type": "date",
+          "libelle": "Date de début de la mission",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "date_fin",
+          "type": "date",
+          "libelle": "Terme prévu de la mission ou du contrat",
+          "requis": false,
+          "alimente_echeancier": true,
+          "alerte": [
+            60,
+            30,
+            7
+          ]
+        },
+        {
+          "id": "duree_preavis_resiliation",
+          "type": "duree",
+          "libelle": "Préavis de résiliation",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "delais_paiement",
+          "type": "texte",
+          "libelle": "Délais de paiement et pénalités de retard",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "jalons",
+          "type": "liste_dates",
+          "libelle": "Jalons et dates de livraison intermédiaires",
+          "requis": false,
+          "alimente_echeancier": true,
+          "alerte": [
+            14,
+            3
+          ]
+        },
+        {
+          "id": "propriete_intellectuelle",
+          "type": "texte",
+          "libelle": "Sort des droits de propriété intellectuelle sur les livrables",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "plafond_responsabilite",
+          "type": "montant",
+          "libelle": "Plafond de responsabilité éventuel",
+          "requis": false,
+          "alimente_echeancier": false
+        }
+      ]
+    },
+    "clauses_attendues": [
+      {
+        "id": "objet_precis",
+        "libelle": "Description précise des prestations et livrables",
+        "gravite_si_absente": "majeure"
+      },
+      {
+        "id": "prix_modalites",
+        "libelle": "Prix et modalités de paiement déterminés ou déterminables",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. 1165 c. civ."
+      },
+      {
+        "id": "propriete_intellectuelle",
+        "libelle": "Cession ou licence des droits sur les livrables",
+        "gravite_si_absente": "majeure",
+        "fondement": "art. L. 131-3 CPI — la cession ne se présume pas, mentions obligatoires"
+      },
+      {
+        "id": "resiliation",
+        "libelle": "Conditions de résiliation (préavis, manquement, restitutions)",
+        "gravite_si_absente": "moyenne"
+      },
+      {
+        "id": "confidentialite",
+        "libelle": "Clause de confidentialité",
+        "gravite_si_absente": "moyenne"
+      },
+      {
+        "id": "independance",
+        "libelle": "Affirmation de l'indépendance du prestataire (organisation, moyens, absence de subordination)",
+        "gravite_si_absente": "moyenne",
+        "fondement": "risque de requalification en contrat de travail (art. L. 8221-6 c. trav.)"
+      },
+      {
+        "id": "donnees_personnelles",
+        "libelle": "Clause RGPD si traitement de données pour le compte du client",
+        "gravite_si_absente": "moyenne",
+        "fondement": "art. 28 RGPD — contrat de sous-traitance obligatoire"
+      }
+    ],
+    "clauses_pieges": [
+      {
+        "id": "dependance_economique",
+        "libelle": "Indices de subordination (horaires imposés, matériel fourni, exclusivité totale)",
+        "detection": "Cumul d'instructions permanentes, d'intégration au service et d'exclusivité",
+        "gravite": "majeure",
+        "fondement": "requalification — Cass. soc., jurisprudence constante"
+      },
+      {
+        "id": "cession_pi_globale_future",
+        "libelle": "Cession globale d'œuvres futures",
+        "detection": "Cession de tous travaux futurs sans délimitation",
+        "gravite": "majeure",
+        "fondement": "art. L. 131-1 CPI — nullité de la cession globale d'œuvres futures"
+      },
+      {
+        "id": "penalites_asymetriques",
+        "libelle": "Pénalités de retard pesant uniquement sur une partie",
+        "detection": "Pénalités prestataire sans équivalent côté client (paiement)",
+        "gravite": "moyenne",
+        "fondement": "art. 1171 c. civ. (déséquilibre significatif, contrats d'adhésion) ; L. 442-1 c. com."
+      },
+      {
+        "id": "non_concurrence_sans_limite",
+        "libelle": "Non-concurrence sans limite de durée, de territoire ou d'objet",
+        "detection": "Interdiction générale d'exercer pour des tiers",
+        "gravite": "majeure"
+      }
+    ],
+    "questions": {
+      "prestataire": [
+        {
+          "id": "perimetre",
+          "question": "Le périmètre peut-il évoluer en cours de mission (avenants, demandes hors forfait) ?",
+          "pourquoi": "Sans procédure de gestion des changements, tout ajout est réputé inclus dans le forfait."
+        },
+        {
+          "id": "reutilisation",
+          "question": "Souhaitez-vous réutiliser des composants génériques développés pour cette mission ?",
+          "pourquoi": "Une cession totale vous interdirait de réutiliser votre propre savoir-faire outillé."
+        }
+      ],
+      "client": [
+        {
+          "id": "dependance",
+          "question": "Que se passe-t-il si le prestataire devient indisponible (réversibilité, documentation) ?",
+          "pourquoi": "Sans clause de réversibilité, vous dépendez de lui pour toute la durée de vie du livrable."
+        },
+        {
+          "id": "propriete",
+          "question": "Avez-vous besoin de la propriété pleine des livrables ou d'un simple droit d'usage ?",
+          "pourquoi": "La cession complète se négocie et se paie ; un droit d'usage suffit souvent."
+        }
+      ]
+    }
+  },
+  "generique": {
+    "meta": {
+      "id": "generique",
+      "version": 1,
+      "nom": "Document juridique (générique)",
+      "famille": "autres"
+    },
+    "identification": {
+      "indices": [],
+      "pieges_confusion": []
+    },
+    "roles": [],
+    "extraction": {
+      "faits": [
+        {
+          "id": "parties",
+          "type": "parties",
+          "libelle": "Parties au document",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "date_document",
+          "type": "date",
+          "libelle": "Date du document",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "dates_cles",
+          "type": "liste_dates",
+          "libelle": "Autres dates importantes (échéances, délais, prises d'effet)",
+          "requis": false,
+          "alimente_echeancier": true,
+          "alerte": [
+            30,
+            7
+          ]
+        },
+        {
+          "id": "montants",
+          "type": "liste_montants",
+          "libelle": "Montants mentionnés (avec leur objet)",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "obligations_principales",
+          "type": "texte",
+          "libelle": "Obligations principales de chaque partie",
+          "requis": false,
+          "alimente_echeancier": false
+        },
+        {
+          "id": "duree_et_resiliation",
+          "type": "texte",
+          "libelle": "Durée, renouvellement et conditions de sortie",
+          "requis": false,
+          "alimente_echeancier": false
+        }
+      ]
+    },
+    "clauses_attendues": [],
+    "clauses_pieges": [],
+    "questions": {}
+  }
+}

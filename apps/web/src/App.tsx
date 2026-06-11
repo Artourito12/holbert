@@ -7,6 +7,10 @@ import SignUp from "./pages/SignUp";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
+import Documents from "./pages/Documents";
+import DocumentDetail from "./pages/DocumentDetail";
+import Echeancier from "./pages/Echeancier";
+import Assistant from "./pages/Assistant";
 import UiKit from "./pages/UiKit";
 import AdminPage from "./pages/admin/AdminPage";
 import NotFound from "./pages/NotFound";
@@ -59,6 +63,10 @@ export default function App() {
         <Route element={<RequireOrg />}>
           <Route element={<AppLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="/assistant" element={<Assistant />} />
+            <Route path="/documents" element={<Documents />} />
+            <Route path="/documents/:id" element={<DocumentDetail />} />
+            <Route path="/echeancier" element={<Echeancier />} />
             <Route
               path="/raader"
               element={<ModulePlaceholder module="raader" />}

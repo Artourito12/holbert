@@ -31,7 +31,7 @@ export default defineConfig([
   {
     // Contextes (provider + hook dans le même fichier, pattern Heldert) et
     // pages avec fetch-dans-effect classique.
-    files: ['apps/web/src/context/**/*.tsx', 'apps/web/src/pages/**/*.tsx'],
+    files: ['apps/web/src/context/**/*.tsx', 'apps/web/src/pages/**/*.tsx', 'apps/web/src/layout/**/*.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
       'react-hooks/set-state-in-effect': 'off',

@@ -1,0 +1,41 @@
+# Référentiel de repli — appliqué quand le type de document n'est pas reconnu
+# ou pas encore couvert par un référentiel dédié.
+meta:
+  id: generique
+  version: 1
+  nom: "Document juridique (générique)"
+  famille: autres
+
+identification:
+  indices: []
+  pieges_confusion: []
+
+roles: []
+
+extraction:
+  faits:
+    - id: parties
+      type: parties
+      libelle: "Parties au document"
+      requis: false
+    - id: date_document
+      type: date
+      libelle: "Date du document"
+    - id: dates_cles
+      type: liste_dates
+      libelle: "Autres dates importantes (échéances, délais, prises d'effet)"
+      alimente_echeancier: true
+      alerte: [30, 7]
+    - id: montants
+      type: liste_montants
+      libelle: "Montants mentionnés (avec leur objet)"
+    - id: obligations_principales
+      type: texte
+      libelle: "Obligations principales de chaque partie"
+    - id: duree_et_resiliation
+      type: texte
+      libelle: "Durée, renouvellement et conditions de sortie"
+
+clauses_attendues: []
+clauses_pieges: []
+questions: {}

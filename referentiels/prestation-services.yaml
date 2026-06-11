@@ -1,0 +1,130 @@
+meta:
+  id: prestation-services
+  version: 1
+  nom: "Contrat de prestation de services"
+  famille: prestataires
+
+identification:
+  indices:
+    - "contrat de prestation de services"
+    - "le prestataire"
+    - "le client"
+    - "cahier des charges"
+    - "livrables"
+    - "obligation de moyens"
+    - "freelance"
+    - "mission"
+    - "honoraires"
+  pieges_confusion:
+    - contrat-travail        # risque de requalification si lien de subordination
+    - contrat-sous-traitance # loi de 1975, régime spécifique
+    - contrat-agence-commerciale
+
+roles: [prestataire, client]
+
+extraction:
+  faits:
+    - id: parties
+      type: parties
+      libelle: "Prestataire et client (identités, SIREN)"
+      requis: true
+    - id: objet
+      type: texte
+      libelle: "Objet de la prestation et livrables attendus"
+      requis: true
+    - id: prix
+      type: montant
+      libelle: "Prix (forfait / régie, HT, modalités de facturation)"
+      requis: true
+    - id: date_signature
+      type: date
+      libelle: "Date de signature"
+    - id: date_debut
+      type: date
+      libelle: "Date de début de la mission"
+    - id: date_fin
+      type: date
+      libelle: "Terme prévu de la mission ou du contrat"
+      alimente_echeancier: true
+      alerte: [60, 30, 7]
+    - id: duree_preavis_resiliation
+      type: duree
+      libelle: "Préavis de résiliation"
+    - id: delais_paiement
+      type: texte
+      libelle: "Délais de paiement et pénalités de retard"
+    - id: jalons
+      type: liste_dates
+      libelle: "Jalons et dates de livraison intermédiaires"
+      alimente_echeancier: true
+      alerte: [14, 3]
+    - id: propriete_intellectuelle
+      type: texte
+      libelle: "Sort des droits de propriété intellectuelle sur les livrables"
+    - id: plafond_responsabilite
+      type: montant
+      libelle: "Plafond de responsabilité éventuel"
+
+clauses_attendues:
+  - id: objet_precis
+    libelle: "Description précise des prestations et livrables"
+    gravite_si_absente: majeure
+  - id: prix_modalites
+    libelle: "Prix et modalités de paiement déterminés ou déterminables"
+    gravite_si_absente: majeure
+    fondement: "art. 1165 c. civ."
+  - id: propriete_intellectuelle
+    libelle: "Cession ou licence des droits sur les livrables"
+    gravite_si_absente: majeure
+    fondement: "art. L. 131-3 CPI — la cession ne se présume pas, mentions obligatoires"
+  - id: resiliation
+    libelle: "Conditions de résiliation (préavis, manquement, restitutions)"
+    gravite_si_absente: moyenne
+  - id: confidentialite
+    libelle: "Clause de confidentialité"
+    gravite_si_absente: moyenne
+  - id: independance
+    libelle: "Affirmation de l'indépendance du prestataire (organisation, moyens, absence de subordination)"
+    gravite_si_absente: moyenne
+    fondement: "risque de requalification en contrat de travail (art. L. 8221-6 c. trav.)"
+  - id: donnees_personnelles
+    libelle: "Clause RGPD si traitement de données pour le compte du client"
+    gravite_si_absente: moyenne
+    fondement: "art. 28 RGPD — contrat de sous-traitance obligatoire"
+
+clauses_pieges:
+  - id: dependance_economique
+    libelle: "Indices de subordination (horaires imposés, matériel fourni, exclusivité totale)"
+    detection: "Cumul d'instructions permanentes, d'intégration au service et d'exclusivité"
+    gravite: majeure
+    fondement: "requalification — Cass. soc., jurisprudence constante"
+  - id: cession_pi_globale_future
+    libelle: "Cession globale d'œuvres futures"
+    detection: "Cession de tous travaux futurs sans délimitation"
+    gravite: majeure
+    fondement: "art. L. 131-1 CPI — nullité de la cession globale d'œuvres futures"
+  - id: penalites_asymetriques
+    libelle: "Pénalités de retard pesant uniquement sur une partie"
+    detection: "Pénalités prestataire sans équivalent côté client (paiement)"
+    gravite: moyenne
+    fondement: "art. 1171 c. civ. (déséquilibre significatif, contrats d'adhésion) ; L. 442-1 c. com."
+  - id: non_concurrence_sans_limite
+    libelle: "Non-concurrence sans limite de durée, de territoire ou d'objet"
+    detection: "Interdiction générale d'exercer pour des tiers"
+    gravite: majeure
+
+questions:
+  prestataire:
+    - id: perimetre
+      question: "Le périmètre peut-il évoluer en cours de mission (avenants, demandes hors forfait) ?"
+      pourquoi: "Sans procédure de gestion des changements, tout ajout est réputé inclus dans le forfait."
+    - id: reutilisation
+      question: "Souhaitez-vous réutiliser des composants génériques développés pour cette mission ?"
+      pourquoi: "Une cession totale vous interdirait de réutiliser votre propre savoir-faire outillé."
+  client:
+    - id: dependance
+      question: "Que se passe-t-il si le prestataire devient indisponible (réversibilité, documentation) ?"
+      pourquoi: "Sans clause de réversibilité, vous dépendez de lui pour toute la durée de vie du livrable."
+    - id: propriete
+      question: "Avez-vous besoin de la propriété pleine des livrables ou d'un simple droit d'usage ?"
+      pourquoi: "La cession complète se négocie et se paie ; un droit d'usage suffit souvent."

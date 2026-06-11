@@ -1,0 +1,134 @@
+meta:
+  id: bail-commercial
+  version: 1
+  nom: "Bail commercial"
+  famille: baux
+
+identification:
+  indices:
+    - "bail commercial"
+    - "locaux à usage commercial"
+    - "statut des baux commerciaux"
+    - "articles L. 145-1 et suivants du code de commerce"
+    - "indice des loyers commerciaux"
+    - "ILC"
+    - "ILAT"
+    - "déspécialisation"
+    - "propriété commerciale"
+    - "fonds de commerce exploité dans les lieux"
+  pieges_confusion:
+    - bail-professionnel    # professions libérales, régime différent (art. 57 A loi 1986)
+    - bail-habitation       # loi du 6 juillet 1989
+    - bail-derogatoire      # ≤ 3 ans, hors statut (L. 145-5)
+
+roles: [bailleur, preneur]
+
+extraction:
+  faits:
+    - id: parties
+      type: parties
+      libelle: "Bailleur et preneur (identités complètes, SIREN si sociétés)"
+      requis: true
+    - id: locaux
+      type: texte
+      libelle: "Désignation des locaux loués (adresse, surface, lots)"
+      requis: true
+    - id: destination
+      type: texte
+      libelle: "Destination contractuelle des lieux (activités autorisées)"
+      requis: true
+    - id: date_signature
+      type: date
+      libelle: "Date de signature"
+    - id: date_prise_effet
+      type: date
+      libelle: "Date de prise d'effet du bail"
+      requis: true
+    - id: duree
+      type: duree
+      libelle: "Durée du bail (9 ans minimum sauf dérogatoire)"
+      requis: true
+    - id: echeance_triennale_1
+      type: date
+      libelle: "Première échéance triennale (faculté de résiliation du preneur, L. 145-4)"
+      alimente_echeancier: true
+      alerte: [365, 270, 210]   # préavis de congé : 6 mois — alerter très en amont
+    - id: fin_bail
+      type: date
+      libelle: "Terme du bail (enjeu : renouvellement / congé)"
+      alimente_echeancier: true
+      alerte: [365, 270, 180]
+    - id: loyer_annuel
+      type: montant
+      libelle: "Loyer annuel HT/HC"
+      requis: true
+    - id: indexation
+      type: texte
+      libelle: "Clause d'indexation : indice (ILC/ILAT), périodicité, date de révision"
+    - id: depot_garantie
+      type: montant
+      libelle: "Dépôt de garantie"
+    - id: charges_et_606
+      type: texte
+      libelle: "Répartition des charges, impôts et travaux (inventaire Pinel, art. 606 c. civ.)"
+    - id: garanties
+      type: texte
+      libelle: "Garanties exigées (caution, GAPD, garantie à première demande)"
+
+clauses_attendues:
+  - id: destination
+    libelle: "Clause de destination précise"
+    gravite_si_absente: majeure
+    fondement: "art. L. 145-47 c. com. (déspécialisation)"
+  - id: repartition_charges
+    libelle: "Inventaire précis des charges et leur répartition"
+    gravite_si_absente: majeure
+    fondement: "art. L. 145-40-2 c. com. (loi Pinel) — inventaire obligatoire"
+  - id: indexation
+    libelle: "Clause d'indexation sur ILC ou ILAT"
+    gravite_si_absente: moyenne
+    fondement: "art. L. 112-2 c. mon. fin. (indice licite en lien avec l'activité)"
+  - id: etat_des_lieux
+    libelle: "État des lieux d'entrée"
+    gravite_si_absente: moyenne
+    fondement: "art. L. 145-40-1 c. com."
+  - id: sort_travaux_ameliorations
+    libelle: "Sort des travaux et améliorations en fin de bail"
+    gravite_si_absente: moyenne
+
+clauses_pieges:
+  - id: duree_ferme_deguisee
+    libelle: "Renonciation du preneur aux facultés de résiliation triennale"
+    detection: "Renonciation aux échéances triennales hors cas autorisés (bail > 9 ans, locaux monovalents, bureaux : L. 145-4 al. 2)"
+    gravite: majeure
+    fondement: "art. L. 145-4 c. com. — clause réputée non écrite hors exceptions"
+  - id: indexation_asymetrique
+    libelle: "Indexation ne jouant qu'à la hausse"
+    detection: "Clause d'échelle mobile excluant la baisse de l'indice"
+    gravite: majeure
+    fondement: "Cass. 3e civ., 30 juin 2021, n° 19-23.038 — clause réputée non écrite"
+  - id: transfert_606
+    libelle: "Transfert au preneur des grosses réparations (art. 606)"
+    detection: "Charges, travaux ou honoraires imputés au preneur en violation de R. 145-35"
+    gravite: majeure
+    fondement: "art. R. 145-35 c. com. (post-Pinel) — répartition impérative"
+  - id: clause_recette_sans_minimum
+    libelle: "Loyer variable privant le preneur du statut"
+    detection: "Loyer intégralement variable sans clause de sauvegarde"
+    gravite: moyenne
+
+questions:
+  bailleur:
+    - id: objectif
+      question: "Souhaitez-vous sécuriser un revenu long terme ou garder la possibilité de récupérer les locaux ?"
+      pourquoi: "Oriente la durée ferme, les garanties et la clause de destination."
+    - id: solvabilite
+      question: "Quelles garanties le preneur peut-il fournir (caution, garantie bancaire) ?"
+      pourquoi: "Le dépôt de garantie seul couvre rarement plus d'un trimestre d'impayés."
+  preneur:
+    - id: evolution_activite
+      question: "Votre activité peut-elle évoluer dans les 9 prochaines années ?"
+      pourquoi: "Une destination trop étroite bloque toute diversification sans accord du bailleur."
+    - id: sortie
+      question: "Avez-vous besoin de flexibilité pour quitter les locaux avant 9 ans ?"
+      pourquoi: "Les échéances triennales sont votre seule porte de sortie sans frais — vérifier qu'elles ne sont pas neutralisées."

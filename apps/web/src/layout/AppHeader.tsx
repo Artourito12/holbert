@@ -3,6 +3,7 @@ import { useSidebar } from "../context/SidebarContext";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useOrg } from "../context/OrgContext";
+import NotificationsDropdown from "./NotificationsDropdown";
 import {
   IconBuilding,
   IconCheck,
@@ -88,6 +89,7 @@ export default function AppHeader() {
       </div>
 
       <div className="flex items-center gap-2">
+        <NotificationsDropdown />
         <button
           onClick={toggleTheme}
           className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"

@@ -81,6 +81,27 @@ export const IconAdmin = ({ className }: IconProps) => (
   </Icon>
 );
 
+export const IconCalendar = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M8 3v4M16 3v4M3 10h18" />
+  </Icon>
+);
+
+export const IconAssistant = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M12 3l1.8 4.8L18.5 9.5l-4.7 1.7L12 16l-1.8-4.8L5.5 9.5l4.7-1.7L12 3Z" />
+    <path d="M19 15l.9 2.4 2.1.8-2.1.8L19 21l-.9-2.4-2.1-.8 2.1-.8L19 15Z" />
+  </Icon>
+);
+
+export const IconBell = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M18 9a6 6 0 1 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9Z" />
+    <path d="M10 20a2.2 2.2 0 0 0 4 0" />
+  </Icon>
+);
+
 export const IconMenu = ({ className }: IconProps) => (
   <Icon className={className}>
     <path d="M4 6h16" />

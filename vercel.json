@@ -2,6 +2,14 @@
   "buildCommand": "npm run build",
   "outputDirectory": "apps/web/dist",
   "framework": null,
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    { "path": "/api/cron/deadlines", "schedule": "0 6 * * *" }
+  ],
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
