@@ -3,6 +3,7 @@ import type { ModuleId } from "@holbert/core";
 import { useAuth } from "./context/AuthContext";
 import { useOrg } from "./context/OrgContext";
 import AppLayout from "./layout/AppLayout";
+import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import CreateOrganization from "./pages/CreateOrganization";
@@ -43,7 +44,7 @@ function LoadingScreen() {
 function RequireAuth() {
   const { session, loading } = useAuth();
   if (loading) return <LoadingScreen />;
-  if (!session) return <Navigate to="/signin" replace />;
+  if (!session) return <Navigate to="/accueil" replace />;
   return <Outlet />;
 }
 
@@ -74,6 +75,7 @@ function RequireAdmin() {
 export default function App() {
   return (
     <Routes>
+      <Route path="/accueil" element={<Landing />} />
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
 
