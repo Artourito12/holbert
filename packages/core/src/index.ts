@@ -6,3 +6,4 @@ export * from "./baremes.generated";
 export * from "./calculs";
 export * from "./widgets";
 export * from "./courriers";
+export * from "./onboarding";

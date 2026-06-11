@@ -7,6 +7,7 @@ import type {
   EvenementChronologie,
   Piece,
 } from "@holbert/core";
+import { REFERENTIELS_REGISTRY } from "@holbert/core";
 import { Badge, useToast } from "@holbert/ui";
 import { supabase } from "../../lib/supabase";
 import { apiPost, sha256 } from "../../lib/api";
@@ -32,7 +33,7 @@ const inputCls =
 export default function DossierDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { currentOrg } = useOrg();
+  const { currentOrg, hasModule } = useOrg();
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dossier, setDossier] = useState<Dossier | null>(null);
@@ -399,6 +400,19 @@ export default function DossierDetail() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* Pont Raader (brief §7, 2+3) : auditer le contrat litigieux sans rupture */}
+                      {hasModule("raader") &&
+                        p.documents?.statut === "ready" &&
+                        (REFERENTIELS_REGISTRY.find((r) => r.id === p.documents?.type_confirme)?.roles
+                          .length ?? 0) > 0 && (
+                          <Link
+                            to={`/documents/${p.document_id}`}
+                            className="rounded-lg border border-brand-200 px-3 py-1.5 text-xs font-medium text-brand-600 hover:bg-brand-25 dark:border-brand-500/30"
+                            title="Contrat reconnu : audit clause par clause via Raader"
+                          >
+                            Auditer
+                          </Link>
+                        )}
                       <button
                         onClick={() => void renumeroter(p, -1)}
                         disabled={i === 0}

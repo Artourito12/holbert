@@ -20,8 +20,12 @@ const REPONSES_A_VENIR = {
   audit:
     "L'audit de contrats est disponible : ouvrez votre contrat dans Documents puis cliquez « Auditer ». " +
     "Le lancement de l'audit directement depuis cette conversation arrive bientôt.",
-  analyse_pieces: "L'analyse de dossiers de pièces arrive avec le module Pleiter.",
-  action_gestion: "Les actions de gestion (échéances, tâches) arrivent à un prochain jalon.",
+  analyse_pieces:
+    "L'analyse de pièces se fait dans un dossier : module Pleiter > Nouveau dossier, déposez-y vos pièces " +
+    "en vrac — chronologie, bordereau et analyses (vices, prescription, conclusions) s'y construisent.",
+  action_gestion:
+    "Vos échéances détectées sont dans l'Échéancier (marquer traitée/ignorée). " +
+    "Les tâches et rappels personnalisés arrivent à un prochain jalon.",
 };
 
 const DISCLAIMER =
