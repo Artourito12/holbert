@@ -160,6 +160,14 @@ export type ChatSource = {
   extrait: string;
 };
 
+export type SourceLoi = {
+  citation: string;
+  code: string;
+  trouve: boolean;
+  etat: string | null;
+  url: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   conversation_id: string;
@@ -169,6 +177,7 @@ export type ChatMessage = {
   intent: Record<string, unknown> | null;
   sources: ChatSource[] | null;
   widget: Record<string, unknown> | null;
+  sources_loi: SourceLoi[] | null;
   created_at: string;
 };
 

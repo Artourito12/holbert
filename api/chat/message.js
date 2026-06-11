@@ -2,6 +2,7 @@ import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
 import { anthropic, structured, MODEL_FAST, MODEL_SMART } from "../_lib/claude.js";
 import { embed } from "../_lib/openai.js";
+import { verifierCitations } from "../_lib/legifrance.js";
 
 const KINDS = [
   "question", "calcul", "generation", "audit",
@@ -181,6 +182,14 @@ export default async function handler(req, res) {
       }
     }
 
+    // ---- Mode preuve : vérification Légifrance des articles cités -----------
+    let sourcesLoi = [];
+    try {
+      sourcesLoi = await verifierCitations(contenu);
+    } catch (e) {
+      console.error("[Holbert API] mode preuve:", e.message);
+    }
+
     if (intent.besoin_professionnel) {
       contenu +=
         "\n\n**Votre situation semble dépasser l'information juridique générale.** " +
@@ -199,6 +208,7 @@ export default async function handler(req, res) {
         intent,
         sources,
         widget,
+        sources_loi: sourcesLoi.length ? sourcesLoi : null,
       })
       .select()
       .single();

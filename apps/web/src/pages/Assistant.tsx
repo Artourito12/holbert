@@ -66,6 +66,7 @@ export default function Assistant() {
         intent: null,
         sources: null,
         widget: null,
+        sources_loi: null,
         created_at: new Date().toISOString(),
       },
     ]);
@@ -166,6 +167,50 @@ export default function Assistant() {
                           competence={(m.widget as unknown as Widget).competence}
                           params={(m.widget as unknown as Widget).params}
                         />
+                      </div>
+                    )}
+                    {m.sources_loi && m.sources_loi.length > 0 && (
+                      <div className="mt-3 space-y-1.5 rounded-lg border border-gray-200 px-3 py-2.5 dark:border-gray-700">
+                        <p className="text-xs font-medium uppercase text-gray-400">
+                          Textes officiels (vérifiés sur Légifrance)
+                        </p>
+                        {m.sources_loi.map((s) => (
+                          <div key={s.citation} className="flex items-center gap-2 text-xs">
+                            <span
+                              className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${
+                                !s.trouve
+                                  ? "bg-error-500"
+                                  : s.etat === "VIGUEUR"
+                                    ? "bg-success-500"
+                                    : "bg-warning-500"
+                              }`}
+                              title={
+                                !s.trouve
+                                  ? "Article introuvable dans ce code — référence à vérifier"
+                                  : s.etat === "VIGUEUR"
+                                    ? "Article en vigueur"
+                                    : "Article trouvé — vérifiez la version en vigueur"
+                              }
+                            >
+                              {!s.trouve ? "✕" : "✓"}
+                            </span>
+                            {s.url ? (
+                              <a
+                                href={s.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-brand-600 underline decoration-brand-200 underline-offset-2 hover:text-brand-700"
+                              >
+                                {s.citation}
+                              </a>
+                            ) : (
+                              <span className="text-gray-600 dark:text-gray-300">{s.citation}</span>
+                            )}
+                            {!s.trouve && (
+                              <span className="text-error-600">référence à vérifier</span>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                     {m.sources && m.sources.length > 0 && (
