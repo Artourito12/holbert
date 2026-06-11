@@ -14,6 +14,8 @@ import ContratNouveau from "./pages/raader/ContratNouveau";
 import ContratGenere from "./pages/raader/ContratGenere";
 import CourrierNouveau from "./pages/raader/CourrierNouveau";
 import { CalculateursListe, CalculateurPage } from "./pages/raader/Calculateurs";
+import PleiterHub from "./pages/pleiter/PleiterHub";
+import DossierDetail from "./pages/pleiter/DossierDetail";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import Echeancier from "./pages/Echeancier";
@@ -91,10 +93,10 @@ export default function App() {
               <Route path="/calculateurs" element={<CalculateursListe />} />
               <Route path="/calculateurs/:competence" element={<CalculateurPage />} />
             </Route>
-            <Route
-              path="/pleiter"
-              element={<ModulePlaceholder module="pleiter" />}
-            />
+            <Route element={<RequireModule module="pleiter" />}>
+              <Route path="/pleiter" element={<PleiterHub />} />
+              <Route path="/dossiers/:id" element={<DossierDetail />} />
+            </Route>
             <Route
               path="/normer"
               element={<ModulePlaceholder module="normer" />}

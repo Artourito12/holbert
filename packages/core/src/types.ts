@@ -172,6 +172,65 @@ export type ChatMessage = {
   created_at: string;
 };
 
+export type Dossier = {
+  id: string;
+  org_id: string;
+  nom: string;
+  parties: { demandeur?: string; defendeur?: string; autres?: string };
+  juridiction: string | null;
+  type_procedure: string | null;
+  enjeu_financier: number | null;
+  statut: "actif" | "clos";
+  created_by: string;
+  created_at: string;
+};
+
+export type Piece = {
+  id: string;
+  dossier_id: string;
+  org_id: string;
+  document_id: string;
+  numero: number;
+  intitule: string;
+  communiquee: boolean;
+  created_at: string;
+};
+
+export type EvenementChronologie = {
+  id: string;
+  dossier_id: string;
+  org_id: string;
+  date: string;
+  titre: string;
+  description: string | null;
+  piece_id: string | null;
+  source_passage: string | null;
+  origine: "ia" | "manuel";
+  created_by: string | null;
+  created_at: string;
+};
+
+export type AnalyseDossier = {
+  id: string;
+  dossier_id: string;
+  org_id: string;
+  type: "vices" | "prescription" | "synthese" | "conclusions";
+  statut: "running" | "done" | "error";
+  resultat: { findings?: AnalyseFinding[] } | null;
+  contenu: string | null;
+  created_by: string;
+  created_at: string;
+};
+
+export type AnalyseFinding = {
+  titre: string;
+  gravite: "mineure" | "moyenne" | "majeure";
+  explication: string;
+  fondement?: string;
+  evenements_lies?: string[];
+  action_recommandee?: string;
+};
+
 export type AuditLogEntry = {
   id: number;
   org_id: string | null;
