@@ -35,7 +35,12 @@ export default function CreateOrganization() {
         const payload = JSON.parse(atob(session.access_token.split(".")[1]));
         lines.push(`  role: ${payload.role}`);
         lines.push(`  sub: ${payload.sub}`);
+        lines.push(`  aud: ${payload.aud}`);
+        lines.push(`  iss: ${payload.iss}`);
+        lines.push(`  aal: ${payload.aal ?? "—"}`);
+        lines.push(`  session_id: ${payload.session_id ?? "—"}`);
         lines.push(`  expired: ${payload.exp * 1000 < Date.now()}`);
+        lines.push(`  all keys: ${Object.keys(payload).join(", ")}`);
       }
 
       // 2. Test INSERT direct avec fetch (bypass supabase client)
