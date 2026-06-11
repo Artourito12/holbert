@@ -119,6 +119,7 @@ export default async function handler(req, res) {
         type_confiance: classification.confiance,
         indices: classification.indices,
         version_de: versionDe,
+        texte,
       })
       .eq("id", doc.id)
       .select()

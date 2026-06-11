@@ -120,6 +120,9 @@ export {
 export { default as TabWithBadge } from "./components/tabs/TabWithBadge";
 export { default as VerticalTabs } from "./components/tabs/VerticalTabs";
 
+// Score (création Holbert dans le style Heldert — cf. docs/01 §4.2)
+export { default as ScoreGauge } from "./components/score/ScoreGauge";
+
 // Tooltip
 export { default as Tooltip } from "./components/tooltip/Tooltip";
 export { default as TooltipExample } from "./components/tooltip/index";

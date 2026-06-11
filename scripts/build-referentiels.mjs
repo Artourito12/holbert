@@ -110,14 +110,26 @@ const registry = Object.values(referentiels).map((r) => ({
   famille: r.meta.famille,
   version: r.meta.version,
   roles: r.roles,
+  questions: r.questions,
+  faits_requis: r.extraction.faits
+    .filter((f) => f.requis)
+    .map((f) => ({ id: f.id, libelle: f.libelle })),
 }));
 const ts = `// Généré par scripts/build-referentiels.mjs — NE PAS ÉDITER À LA MAIN.
+export type ReferentielQuestion = {
+  id: string;
+  question: string;
+  pourquoi: string;
+};
+
 export type ReferentielInfo = {
   id: string;
   nom: string;
   famille: string;
   version: number;
   roles: string[];
+  questions: Record<string, ReferentielQuestion[]>;
+  faits_requis: { id: string; libelle: string }[];
 };
 
 export const REFERENTIELS_REGISTRY: ReferentielInfo[] = ${JSON.stringify(registry, null, 2)};

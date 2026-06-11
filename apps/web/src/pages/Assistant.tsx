@@ -5,24 +5,7 @@ import { useToast } from "@holbert/ui";
 import { supabase } from "../lib/supabase";
 import { apiPost } from "../lib/api";
 import { useOrg } from "../context/OrgContext";
-
-/** Rendu minimal : gras markdown, italique, sauts de ligne. */
-function RenduTexte({ texte }: { texte: string }) {
-  const html = texte
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
-    .replace(/^---$/gm, "<hr class='my-3 border-gray-200 dark:border-gray-700'/>")
-    .replace(/\n/g, "<br/>");
-  return (
-    <div
-      className="text-sm leading-relaxed text-gray-800 dark:text-gray-100"
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-}
+import RenduTexte from "../components/RenduTexte";
 
 export default function Assistant() {
   const { currentOrg } = useOrg();

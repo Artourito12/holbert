@@ -11,7 +11,9 @@ const KINDS = [
 const REPONSES_A_VENIR = {
   calcul: "Les calculs juridiques (indemnités, prescriptions, revalorisations) arrivent à un prochain jalon.",
   generation: "La génération de courriers et de documents arrive à un prochain jalon.",
-  audit: "L'audit de contrats arrive très bientôt — c'est le prochain chantier.",
+  audit:
+    "L'audit de contrats est disponible : ouvrez votre contrat dans Documents puis cliquez « Auditer ». " +
+    "Le lancement de l'audit directement depuis cette conversation arrive bientôt.",
   analyse_pieces: "L'analyse de dossiers de pièces arrive avec le module Pleiter.",
   action_gestion: "Les actions de gestion (échéances, tâches) arrivent à un prochain jalon.",
 };

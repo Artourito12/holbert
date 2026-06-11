@@ -31,11 +31,14 @@ export default async function handler(req, res) {
 
   try {
     // ---- ÉTAGE 2 — extraction structurée pilotée par le référentiel ---------
-    const { data: blob, error: dlError } = await admin.storage
-      .from("documents")
-      .download(doc.storage_path);
-    if (dlError) throw new Error(`Fichier inaccessible : ${dlError.message}`);
-    const { texte } = await extraireTexte(Buffer.from(await blob.arrayBuffer()), doc.mime);
+    let texte = doc.texte;
+    if (!texte) {
+      const { data: blob, error: dlError } = await admin.storage
+        .from("documents")
+        .download(doc.storage_path);
+      if (dlError) throw new Error(`Fichier inaccessible : ${dlError.message}`);
+      ({ texte } = await extraireTexte(Buffer.from(await blob.arrayBuffer()), doc.mime));
+    }
 
     const faitsAttendus = ref.extraction.faits.map((f) => ({
       fait_id: f.id,

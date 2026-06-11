@@ -56,9 +56,53 @@ export type Document = {
   type_confirme: string | null;
   referentiel_version: number | null;
   version_de: string | null;
+  texte: string | null;
   uploaded_by: string;
   created_at: string;
   updated_at: string;
+};
+
+export type Audit = {
+  id: string;
+  org_id: string;
+  document_id: string;
+  role: string;
+  objectif: "signer" | "renegocier" | "sortir" | "comprendre";
+  referentiel_id: string;
+  referentiel_version: number;
+  statut: "running" | "done" | "error";
+  erreur: string | null;
+  score: number | null;
+  synthese: string | null;
+  created_by: string;
+  created_at: string;
+};
+
+export type AuditFinding = {
+  id: string;
+  audit_id: string;
+  org_id: string;
+  categorie: "manquante" | "illegale" | "defavorable" | "incoherence";
+  titre: string;
+  passage: string | null;
+  gravite: "mineure" | "moyenne" | "majeure";
+  fondement: string | null;
+  explication: string | null;
+  reformulation: string | null;
+  ordre: number;
+};
+
+export type GeneratedDocument = {
+  id: string;
+  org_id: string;
+  type: string;
+  role: string | null;
+  variante: "protectrice_a" | "equilibree" | "protectrice_b";
+  titre: string;
+  reponses: Record<string, string>;
+  contenu: string;
+  created_by: string;
+  created_at: string;
 };
 
 export type ExtractedFact = {

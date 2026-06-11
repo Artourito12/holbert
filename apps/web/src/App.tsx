@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from "react-router";
+import type { ModuleId } from "@holbert/core";
 import { useAuth } from "./context/AuthContext";
 import { useOrg } from "./context/OrgContext";
 import AppLayout from "./layout/AppLayout";
@@ -7,6 +8,10 @@ import SignUp from "./pages/SignUp";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
 import ModulePlaceholder from "./pages/ModulePlaceholder";
+import RaaderHub from "./pages/raader/RaaderHub";
+import AuditDetail from "./pages/raader/AuditDetail";
+import ContratNouveau from "./pages/raader/ContratNouveau";
+import ContratGenere from "./pages/raader/ContratGenere";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import Echeancier from "./pages/Echeancier";
@@ -43,6 +48,14 @@ function RequireOrg() {
   return <Outlet />;
 }
 
+/** Réservé aux organisations dont le module est activé. */
+function RequireModule({ module }: { module: ModuleId }) {
+  const { hasModule, loading } = useOrg();
+  if (loading) return <LoadingScreen />;
+  if (!hasModule(module)) return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
 /** Réservé au super admin plateforme. */
 function RequireAdmin() {
   const { isPlatformAdmin, loading } = useOrg();
@@ -67,10 +80,12 @@ export default function App() {
             <Route path="/documents" element={<Documents />} />
             <Route path="/documents/:id" element={<DocumentDetail />} />
             <Route path="/echeancier" element={<Echeancier />} />
-            <Route
-              path="/raader"
-              element={<ModulePlaceholder module="raader" />}
-            />
+            <Route element={<RequireModule module="raader" />}>
+              <Route path="/raader" element={<RaaderHub />} />
+              <Route path="/audits/:id" element={<AuditDetail />} />
+              <Route path="/contrats/nouveau" element={<ContratNouveau />} />
+              <Route path="/contrats/:id" element={<ContratGenere />} />
+            </Route>
             <Route
               path="/pleiter"
               element={<ModulePlaceholder module="pleiter" />}
