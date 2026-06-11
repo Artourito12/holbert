@@ -7,7 +7,6 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
-import ModulePlaceholder from "./pages/ModulePlaceholder";
 import RaaderHub from "./pages/raader/RaaderHub";
 import AuditDetail from "./pages/raader/AuditDetail";
 import ContratNouveau from "./pages/raader/ContratNouveau";
@@ -16,6 +15,9 @@ import CourrierNouveau from "./pages/raader/CourrierNouveau";
 import { CalculateursListe, CalculateurPage } from "./pages/raader/Calculateurs";
 import PleiterHub from "./pages/pleiter/PleiterHub";
 import DossierDetail from "./pages/pleiter/DossierDetail";
+import NormerHub from "./pages/normer/NormerHub";
+import DemandeNouvelle from "./pages/normer/DemandeNouvelle";
+import DemandeDetail from "./pages/normer/DemandeDetail";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import Echeancier from "./pages/Echeancier";
@@ -97,10 +99,11 @@ export default function App() {
               <Route path="/pleiter" element={<PleiterHub />} />
               <Route path="/dossiers/:id" element={<DossierDetail />} />
             </Route>
-            <Route
-              path="/normer"
-              element={<ModulePlaceholder module="normer" />}
-            />
+            <Route element={<RequireModule module="normer" />}>
+              <Route path="/normer" element={<NormerHub />} />
+              <Route path="/demandes/nouvelle" element={<DemandeNouvelle />} />
+              <Route path="/demandes/:id" element={<DemandeDetail />} />
+            </Route>
             <Route path="/ui-kit" element={<UiKit />} />
 
             <Route element={<RequireAdmin />}>

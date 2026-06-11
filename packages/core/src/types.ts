@@ -231,6 +231,33 @@ export type AnalyseFinding = {
   action_recommandee?: string;
 };
 
+export type Demande = {
+  id: string;
+  org_id: string;
+  created_by: string;
+  objet: string;
+  description: string | null;
+  categorie: string | null;
+  priorite: "basse" | "normale" | "haute" | "critique";
+  statut: "nouvelle" | "a_valider" | "repondue" | "cloturee";
+  reponse_ia: string | null;
+  reponse_finale: string | null;
+  validee_par: string | null;
+  validee_at: string | null;
+  created_at: string;
+};
+
+export type ReponseType = {
+  id: string;
+  org_id: string;
+  question: string;
+  reponse: string;
+  categorie: string | null;
+  valide_par: string | null;
+  usage_count: number;
+  created_at: string;
+};
+
 export type AuditLogEntry = {
   id: number;
   org_id: string | null;
