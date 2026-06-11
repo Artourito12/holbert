@@ -6,6 +6,8 @@ import AppLayout from "./layout/AppLayout";
 import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import MotDePasseOublie from "./pages/MotDePasseOublie";
+import Reinitialiser from "./pages/Reinitialiser";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
 import RaaderHub from "./pages/raader/RaaderHub";
@@ -78,6 +80,8 @@ export default function App() {
       <Route path="/accueil" element={<Landing />} />
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+      <Route path="/reinitialiser" element={<Reinitialiser />} />
 
       <Route element={<RequireAuth />}>
         <Route path="/creer-organisation" element={<CreateOrganization />} />
