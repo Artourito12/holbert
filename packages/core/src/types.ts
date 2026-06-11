@@ -289,6 +289,41 @@ export type Invitation = {
   accepted_at: string | null;
 };
 
+export type SourceRecherche = {
+  type: "jurisprudence" | "texte" | "document" | "eu";
+  titre: string;
+  reference: string;
+  url: string | null;
+  extrait?: string;
+};
+
+export type RechercheQuestion = {
+  id: string;
+  question: string;
+  justification?: string;
+  statut: "a_faire" | "fait";
+  section?: string;
+  sources?: SourceRecherche[];
+};
+
+export type Recherche = {
+  id: string;
+  org_id: string;
+  conversation_id: string;
+  created_by: string;
+  question_initiale: string;
+  comprehension: string | null;
+  questions: RechercheQuestion[];
+  statut: "attente_validation" | "en_cours" | "terminee" | "erreur";
+  etape_courante: string | null;
+  progression: number;
+  document: string | null;
+  demarche: { etape: string; detail: string }[];
+  erreur: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type AuditLogEntry = {
   id: number;
   org_id: string | null;

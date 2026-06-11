@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import type { ChatMessage, Conversation, Widget } from "@holbert/core";
 import { useToast } from "@holbert/ui";
 import CalculatriceWidget from "../widgets/CalculatriceWidget";
+import RechercheWidget from "../widgets/RechercheWidget";
 import { supabase } from "../lib/supabase";
 import { apiPost } from "../lib/api";
 import { useOrg } from "../context/OrgContext";
@@ -16,6 +17,7 @@ export default function Assistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [saisie, setSaisie] = useState("");
   const [envoi, setEnvoi] = useState(false);
+  const [modeApprofondi, setModeApprofondi] = useState(false);
   const finRef = useRef<HTMLDivElement>(null);
 
   const loadConversations = useCallback(async () => {
@@ -73,8 +75,14 @@ export default function Assistant() {
     try {
       const r = await apiPost<{ conversation_id: string; message: ChatMessage }>(
         "/api/chat/message",
-        { org_id: currentOrg.id, conversation_id: convId, message: texte }
+        {
+          org_id: currentOrg.id,
+          conversation_id: convId,
+          message: texte,
+          mode: modeApprofondi ? "approfondie" : undefined,
+        }
       );
+      setModeApprofondi(false);
       if (!convId) {
         setConvId(r.conversation_id);
         await loadConversations();
@@ -161,14 +169,24 @@ export default function Assistant() {
                 ) : (
                   <>
                     <RenduTexte texte={m.contenu} />
-                    {m.widget && (m.widget as unknown as Widget).type === "calculatrice" && (
-                      <div className="mt-3">
-                        <CalculatriceWidget
-                          competence={(m.widget as unknown as Widget).competence}
-                          params={(m.widget as unknown as Widget).params}
+                    {m.widget &&
+                      (m.widget as unknown as Widget).type === "calculatrice" &&
+                      (() => {
+                        const w = m.widget as unknown as Extract<Widget, { type: "calculatrice" }>;
+                        return (
+                          <div className="mt-3">
+                            <CalculatriceWidget competence={w.competence} params={w.params} />
+                          </div>
+                        );
+                      })()}
+                    {m.widget &&
+                      ["recherche_validation", "recherche_resultat"].includes(
+                        (m.widget as unknown as Widget).type
+                      ) && (
+                        <RechercheWidget
+                          rechercheId={(m.widget as unknown as { recherche_id: string }).recherche_id}
                         />
-                      </div>
-                    )}
+                      )}
                     {m.sources_loi && m.sources_loi.length > 0 && (
                       <div className="mt-3 space-y-1.5 rounded-lg border border-gray-200 px-3 py-2.5 dark:border-gray-700">
                         <p className="text-xs font-medium uppercase text-gray-400">
@@ -255,6 +273,27 @@ export default function Assistant() {
         </div>
 
         <div className="border-t border-gray-200 p-3 dark:border-gray-800">
+          <div className="mb-2 flex items-center gap-2">
+            <button
+              onClick={() => setModeApprofondi((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                modeApprofondi
+                  ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-400"
+                  : "border-gray-200 text-gray-500 hover:border-brand-300 hover:text-brand-600 dark:border-gray-700 dark:text-gray-400"
+              }`}
+              title="Segmentation du cas en questions validables, puis recherche exhaustive (textes, jurisprudence, vos documents) et document de synthèse"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${modeApprofondi ? "bg-brand-500" : "bg-gray-300 dark:bg-gray-600"}`}
+              />
+              Recherche approfondie
+            </button>
+            {modeApprofondi && (
+              <span className="text-xs text-gray-400">
+                Je segmenterai votre cas en questions que vous validerez avant la recherche.
+              </span>
+            )}
+          </div>
           <div className="flex items-end gap-2">
             <textarea
               value={saisie}

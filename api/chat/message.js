@@ -1,6 +1,6 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { structured, deepText, MODEL_FAST } from "../_lib/claude.js";
+import { structured, structuredDeep, deepText, MODEL_FAST } from "../_lib/claude.js";
 import { embed } from "../_lib/openai.js";
 import { verifierCitations } from "../_lib/legifrance.js";
 import { contexteOrganisation } from "../_lib/org-context.js";
@@ -36,7 +36,7 @@ const DISCLAIMER =
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
 
-  const { org_id, conversation_id, message } = req.body ?? {};
+  const { org_id, conversation_id, message, mode } = req.body ?? {};
   if (!org_id || !message?.trim()) return res.status(400).json({ error: "org_id et message requis" });
 
   const auth = await requireOrgMember(req, res, org_id);
@@ -176,6 +176,124 @@ export default async function handler(req, res) {
       extrait: c.contenu.slice(0, 400),
     }));
 
+    // ---- 2bis. Recherche approfondie : segmentation à valider -----------------
+    // Déclenchée par l'utilisateur (mode "approfondie") ou par le routeur
+    // (cas complexe) pour les demandes d'analyse — docs/09 §4.
+    const kindsAnalyse = ["question", "recherche_base", "analyse_pieces", "hors_perimetre"];
+    if (
+      kindsAnalyse.includes(intent.kind) &&
+      (mode === "approfondie" || intent.complexite === "complexe")
+    ) {
+      const profilSeg = await contexteOrganisation(org_id);
+      const contexteDocs = pertinents.length
+        ? `\nExtraits des documents de l'organisation potentiellement liés :\n${pertinents
+            .slice(0, 4)
+            .map((c) => c.contenu.slice(0, 300))
+            .join("\n---\n")}`
+        : "";
+
+      const seg = await structuredDeep({
+        system:
+          "Vous êtes Hofraad, assistant de recherche juridique pour professionnels du droit. " +
+          "Avant une recherche approfondie, vous devez : 1) reformuler le cas pour VÉRIFIER votre " +
+          "compréhension (faits retenus, partie défendue si identifiable, enjeu) ; 2) SEGMENTER le cas " +
+          "en questions juridiques distinctes et précises (2 à 6), chacune avec une justification d'une " +
+          "phrase expliquant pourquoi elle se pose. L'utilisateur corrigera et validera ces questions " +
+          "avant la recherche. Si un élément de contexte essentiel manque, formulez la question de " +
+          "manière à expliciter l'hypothèse retenue.",
+        prompt:
+          `Demande de l'utilisateur :\n"""${texte}"""\n` +
+          profilSeg +
+          contexteDocs,
+        toolName: "segmenter_cas",
+        description: "Reformule le cas et le segmente en questions juridiques",
+        schema: {
+          type: "object",
+          properties: {
+            comprehension: {
+              type: "string",
+              description: "Reformulation du cas : faits retenus, partie défendue, enjeu — 4-8 lignes",
+            },
+            questions: {
+              type: "array",
+              minItems: 1,
+              maxItems: 6,
+              items: {
+                type: "object",
+                properties: {
+                  question: { type: "string" },
+                  justification: { type: "string" },
+                },
+                required: ["question"],
+              },
+            },
+          },
+          required: ["comprehension", "questions"],
+        },
+        thinkingBudget: 4000,
+        maxTokens: 8000,
+      });
+
+      const questions = (seg.questions ?? []).map((q, i) => ({
+        id: `q${i + 1}`,
+        question: q.question,
+        justification: q.justification ?? null,
+        statut: "a_faire",
+      }));
+
+      const { data: recherche, error: rechError } = await admin
+        .from("recherches")
+        .insert({
+          org_id,
+          conversation_id: convId,
+          created_by: auth.user.id,
+          question_initiale: texte,
+          comprehension: seg.comprehension,
+          questions,
+          statut: "attente_validation",
+          etape_courante: "validation des questions",
+        })
+        .select()
+        .single();
+      if (rechError) return res.status(500).json({ error: rechError.message });
+
+      const { data: segMsg, error: segMsgError } = await admin
+        .from("messages")
+        .insert({
+          conversation_id: convId,
+          org_id,
+          role: "assistant",
+          contenu:
+            "**Voici ce que j'ai compris de votre cas :**\n\n" +
+            seg.comprehension +
+            "\n\nJ'ai segmenté votre demande en questions juridiques distinctes ci-dessous. " +
+            "**Relisez-les, corrigez-les directement si nécessaire, puis validez** : je lancerai " +
+            "alors une recherche approfondie (textes, jurisprudence, vos documents) et produirai " +
+            "un document de synthèse argumenté et sourcé. Vous pourrez quitter la page : la " +
+            "recherche continue et le résultat vous attendra ici.",
+          intent,
+          widget: {
+            type: "recherche_validation",
+            recherche_id: recherche.id,
+            questions: questions.map((q) => ({
+              id: q.id,
+              question: q.question,
+              justification: q.justification,
+            })),
+          },
+        })
+        .select()
+        .single();
+      if (segMsgError) return res.status(500).json({ error: segMsgError.message });
+
+      await logAudit(org_id, auth.user.id, "recherche.segmentee", "recherche", recherche.id, {
+        questions: questions.length,
+        declencheur: mode === "approfondie" ? "utilisateur" : "complexite",
+      });
+
+      return res.status(200).json({ conversation_id: convId, message: segMsg });
+    }
+
     // ---- 3. Exécution selon l'intention ---------------------------------------
     let contenu;
     let widget = null;
@@ -232,12 +350,6 @@ export default async function handler(req, res) {
         maxTokens: profondeur.maxTokens,
       });
 
-      if (intent.complexite === "complexe") {
-        contenu +=
-          "\n\n*Cas complexe détecté : la recherche approfondie segmentée (analyse question par " +
-          "question, sources Légifrance et Judilibre exhaustives, document de synthèse) arrive très " +
-          "prochainement dans Hofraad.*";
-      }
     } else {
       contenu =
         `J'ai bien compris votre demande (${intent.kind.replace("_", " ")}), mais cette compétence n'est pas encore ouverte : ` +

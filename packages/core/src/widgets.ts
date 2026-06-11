@@ -19,13 +19,32 @@ export const COMPETENCES_CALCUL: Record<
   },
 };
 
+/** Question segmentée d'une recherche approfondie (éditable avant validation). */
+export type RechercheQuestionWidget = {
+  id: string;
+  question: string;
+  justification?: string;
+};
+
 /**
  * Contrat widget émis par l'IA et rendu nativement par le front.
  * (frise, arbre de décision, comparatif… arrivent aux jalons suivants)
  */
-export type Widget = {
-  type: "calculatrice";
-  competence: CompetenceCalcul;
-  /** Paramètres pré-remplis détectés dans la conversation. */
-  params?: Record<string, string | number>;
-};
+export type Widget =
+  | {
+      type: "calculatrice";
+      competence: CompetenceCalcul;
+      /** Paramètres pré-remplis détectés dans la conversation. */
+      params?: Record<string, string | number>;
+    }
+  | {
+      /** Encarts éditables : l'utilisateur corrige puis valide la segmentation. */
+      type: "recherche_validation";
+      recherche_id: string;
+      questions: RechercheQuestionWidget[];
+    }
+  | {
+      /** Suivi de progression + restitution du document de synthèse. */
+      type: "recherche_resultat";
+      recherche_id: string;
+    };

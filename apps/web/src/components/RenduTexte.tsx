@@ -15,6 +15,11 @@ export default function RenduTexte({ texte }: { texte: string }) {
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
       .replace(/^---$/gm, "<hr class='my-3 border-gray-200 dark:border-gray-700'/>")
+      // URLs brutes → liens cliquables (avant lierCitations, qui injecte des href)
+      .replace(
+        /(https?:\/\/[^\s<)]+)/g,
+        "<a href='$1' target='_blank' rel='noopener noreferrer' class='break-all text-brand-600 underline decoration-brand-200 underline-offset-2 hover:text-brand-700'>$1</a>"
+      )
       .replace(/\n/g, "<br/>")
       .replace(/<\/h(\d)><br\/>/g, "</h$1>")
       .replace(/<\/li><br\/>/g, "</li>")
