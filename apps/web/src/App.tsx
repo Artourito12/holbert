@@ -12,6 +12,8 @@ import RaaderHub from "./pages/raader/RaaderHub";
 import AuditDetail from "./pages/raader/AuditDetail";
 import ContratNouveau from "./pages/raader/ContratNouveau";
 import ContratGenere from "./pages/raader/ContratGenere";
+import CourrierNouveau from "./pages/raader/CourrierNouveau";
+import { CalculateursListe, CalculateurPage } from "./pages/raader/Calculateurs";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import Echeancier from "./pages/Echeancier";
@@ -85,6 +87,9 @@ export default function App() {
               <Route path="/audits/:id" element={<AuditDetail />} />
               <Route path="/contrats/nouveau" element={<ContratNouveau />} />
               <Route path="/contrats/:id" element={<ContratGenere />} />
+              <Route path="/courriers/nouveau" element={<CourrierNouveau />} />
+              <Route path="/calculateurs" element={<CalculateursListe />} />
+              <Route path="/calculateurs/:competence" element={<CalculateurPage />} />
             </Route>
             <Route
               path="/pleiter"

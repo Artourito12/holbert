@@ -44,7 +44,7 @@ export default function RaaderHub() {
         </p>
       </div>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Link
           to="/documents"
           className="group rounded-xl border border-gray-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-theme-md dark:border-gray-800 dark:bg-gray-900"
@@ -53,9 +53,8 @@ export default function RaaderHub() {
             Auditer un contrat →
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Importez un contrat (ou choisissez-en un déjà classé), indiquez
-            votre camp et votre objectif : clauses manquantes, illégales,
-            défavorables, score de risque et reformulations proposées.
+            Votre camp, votre objectif : clauses manquantes, illégales,
+            défavorables, score de risque et reformulations.
           </p>
         </Link>
         <Link
@@ -66,8 +65,31 @@ export default function RaaderHub() {
             Créer un contrat →
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Questionnaire guidé puis génération complète, en variante
-            protectrice pour votre camp ou équilibrée. Export DOCX.
+            Questionnaire guidé, variantes par camp, export DOCX.
+          </p>
+        </Link>
+        <Link
+          to="/calculateurs"
+          className="group rounded-xl border border-gray-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-theme-md dark:border-gray-800 dark:bg-gray-900"
+        >
+          <h2 className="text-base font-semibold text-gray-900 group-hover:text-brand-600 dark:text-white">
+            Calculateurs →
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Licenciement, pension et arriérés, prescription — détail du calcul
+            et sources inclus.
+          </p>
+        </Link>
+        <Link
+          to="/courriers/nouveau"
+          className="group rounded-xl border border-gray-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-theme-md dark:border-gray-800 dark:bg-gray-900"
+        >
+          <h2 className="text-base font-semibold text-gray-900 group-hover:text-brand-600 dark:text-white">
+            Rédiger un courrier →
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Mise en demeure, résiliations, dépôt de garantie — avec leurs
+            fondements juridiques.
           </p>
         </Link>
       </div>

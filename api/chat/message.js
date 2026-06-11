@@ -9,8 +9,13 @@ const KINDS = [
 ];
 
 const REPONSES_A_VENIR = {
-  calcul: "Les calculs juridiques (indemnités, prescriptions, revalorisations) arrivent à un prochain jalon.",
-  generation: "La génération de courriers et de documents arrive à un prochain jalon.",
+  calcul:
+    "Ce calcul précis n'est pas encore couvert. Calculs disponibles : indemnité de licenciement, " +
+    "revalorisation de pension alimentaire et arriérés, délais de prescription (page Calculateurs du module Raader).",
+  generation:
+    "La génération est disponible : pour un contrat, passez par Raader > Créer un contrat ; " +
+    "pour un courrier (mise en demeure, résiliations, dépôt de garantie), par Raader > Courriers. " +
+    "La génération directe depuis cette conversation arrive bientôt.",
   audit:
     "L'audit de contrats est disponible : ouvrez votre contrat dans Documents puis cliquez « Auditer ». " +
     "Le lancement de l'audit directement depuis cette conversation arrive bientôt.",
@@ -85,10 +90,24 @@ export default async function handler(req, res) {
             type: "string",
             description: "Reformulation optimale pour la recherche dans la base documentaire",
           },
+          competence_calcul: {
+            type: "string",
+            enum: ["licenciement", "pension", "prescription", "autre"],
+            description:
+              "Si kind=calcul : licenciement (indemnité de licenciement), pension (pension alimentaire, " +
+              "revalorisation, arriérés), prescription (délais pour agir), sinon autre",
+          },
+          params_calcul: {
+            type: "object",
+            description:
+              "Paramètres chiffrés/datés détectés dans la demande (clés : salaire_reference, " +
+              "anciennete_annees, anciennete_mois, pension_initiale, annee_fixation, paye_mensuel, " +
+              "date_debut, date_fin, type_action, point_depart — uniquement si explicites)",
+          },
         },
         required: ["kind", "besoin_professionnel", "requete_recherche"],
       },
-      maxTokens: 400,
+      maxTokens: 600,
     });
 
     // ---- 2. Recherche SYSTÉMATIQUE dans la base de l'org ---------------------
@@ -116,7 +135,20 @@ export default async function handler(req, res) {
 
     // ---- 3. Exécution selon l'intention ---------------------------------------
     let contenu;
-    if (intent.kind === "question" || intent.kind === "recherche_base" || intent.kind === "hors_perimetre") {
+    let widget = null;
+    if (
+      intent.kind === "calcul" &&
+      ["licenciement", "pension", "prescription"].includes(intent.competence_calcul)
+    ) {
+      widget = {
+        type: "calculatrice",
+        competence: intent.competence_calcul,
+        params: intent.params_calcul ?? {},
+      };
+      contenu =
+        "Voici le calculateur correspondant à votre demande. Ajustez les valeurs : le résultat, " +
+        "le détail du calcul et ses sources se mettent à jour en temps réel.";
+    } else if (intent.kind === "question" || intent.kind === "recherche_base" || intent.kind === "hors_perimetre") {
       const contexte = sources.length
         ? sources.map((s) => `[${s.n}] (${s.nom_fichier})\n${s.extrait}`).join("\n\n")
         : "(aucun document pertinent dans la base de l'organisation)";
@@ -166,6 +198,7 @@ export default async function handler(req, res) {
         contenu,
         intent,
         sources,
+        widget,
       })
       .select()
       .single();

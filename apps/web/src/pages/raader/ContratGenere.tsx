@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { GeneratedDocument } from "@holbert/core";
-import { referentielNom } from "@holbert/core";
+import { COURRIERS, referentielNom } from "@holbert/core";
+
+function labelType(type: string): string {
+  if (type.startsWith("courrier_")) {
+    return COURRIERS.find((c) => `courrier_${c.id}` === type)?.nom ?? "Courrier";
+  }
+  return referentielNom(type);
+}
 import { Badge, useToast } from "@holbert/ui";
 import { supabase } from "../../lib/supabase";
 import { telechargerDocx } from "../../lib/docx";
@@ -48,7 +55,7 @@ export default function ContratGenere() {
           <h1 className="text-title-sm font-semibold text-gray-900 dark:text-white">
             {doc.titre}
           </h1>
-          <Badge color="primary">{referentielNom(doc.type)}</Badge>
+          <Badge color="primary">{labelType(doc.type)}</Badge>
           {doc.role && <Badge color="light">côté {doc.role}</Badge>}
         </div>
         <div className="flex gap-2">

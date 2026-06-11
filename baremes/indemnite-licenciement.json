@@ -1,0 +1,22 @@
+{
+  "id": "indemnite-licenciement",
+  "nom": "Indemnité légale de licenciement",
+  "source": "art. R. 1234-2 du code du travail",
+  "periodes": [
+    {
+      "effective_from": "1900-01-01",
+      "effective_to": "2017-09-26",
+      "taux_jusqua_10_ans": 0.2,
+      "taux_au_dela_10_ans": 0.33333333,
+      "note": "1/5 de mois par année + 2/15 au-delà de 10 ans (ancien R. 1234-2) : 1/5 + 2/15 = 1/3"
+    },
+    {
+      "effective_from": "2017-09-27",
+      "effective_to": null,
+      "taux_jusqua_10_ans": 0.25,
+      "taux_au_dela_10_ans": 0.33333333,
+      "note": "1/4 de mois par année jusqu'à 10 ans, 1/3 au-delà (décret n° 2017-1398)"
+    }
+  ],
+  "anciennete_minimale_mois": 8
+}

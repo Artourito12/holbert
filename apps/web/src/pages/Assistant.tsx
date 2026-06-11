@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import type { ChatMessage, Conversation } from "@holbert/core";
+import type { ChatMessage, Conversation, Widget } from "@holbert/core";
 import { useToast } from "@holbert/ui";
+import CalculatriceWidget from "../widgets/CalculatriceWidget";
 import { supabase } from "../lib/supabase";
 import { apiPost } from "../lib/api";
 import { useOrg } from "../context/OrgContext";
@@ -159,6 +160,14 @@ export default function Assistant() {
                 ) : (
                   <>
                     <RenduTexte texte={m.contenu} />
+                    {m.widget && (m.widget as unknown as Widget).type === "calculatrice" && (
+                      <div className="mt-3">
+                        <CalculatriceWidget
+                          competence={(m.widget as unknown as Widget).competence}
+                          params={(m.widget as unknown as Widget).params}
+                        />
+                      </div>
+                    )}
                     {m.sources && m.sources.length > 0 && (
                       <details className="mt-3">
                         <summary className="cursor-pointer text-xs font-medium text-brand-600">

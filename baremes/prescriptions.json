@@ -1,0 +1,23 @@
+{
+  "id": "prescriptions",
+  "nom": "Délais de prescription",
+  "source": "Code civil, code de la consommation, code du travail",
+  "delais": [
+    { "id": "droit_commun", "libelle": "Action personnelle ou mobilière (droit commun)", "annees": 5, "fondement": "art. 2224 c. civ." },
+    { "id": "consommation", "libelle": "Action d'un professionnel contre un consommateur", "annees": 2, "fondement": "art. L. 218-2 c. consom." },
+    { "id": "salaires", "libelle": "Paiement ou répétition de salaires", "annees": 3, "fondement": "art. L. 3245-1 c. trav." },
+    { "id": "loyers", "libelle": "Loyers et charges (bail d'habitation)", "annees": 3, "fondement": "art. 7-1 loi du 6 juillet 1989" },
+    { "id": "dommage_corporel", "libelle": "Réparation d'un dommage corporel", "annees": 10, "fondement": "art. 2226 c. civ." },
+    { "id": "immobiliere", "libelle": "Action réelle immobilière", "annees": 30, "fondement": "art. 2227 c. civ." },
+    { "id": "titre_executoire", "libelle": "Exécution d'un titre exécutoire (jugement)", "annees": 10, "fondement": "art. L. 111-4 CPCE" }
+  ],
+  "interruptions": [
+    { "id": "assignation", "libelle": "Demande en justice (assignation, même en référé)", "fondement": "art. 2241 c. civ." },
+    { "id": "execution_forcee", "libelle": "Acte d'exécution forcée (saisie…)", "fondement": "art. 2244 c. civ." },
+    { "id": "reconnaissance", "libelle": "Reconnaissance de son droit par le débiteur", "fondement": "art. 2240 c. civ." }
+  ],
+  "suspensions": [
+    { "id": "mediation", "libelle": "Médiation ou conciliation", "fondement": "art. 2238 c. civ." },
+    { "id": "impossibilite_agir", "libelle": "Impossibilité d'agir (force majeure)", "fondement": "art. 2234 c. civ." }
+  ]
+}
