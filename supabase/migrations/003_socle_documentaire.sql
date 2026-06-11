@@ -3,9 +3,21 @@
 -- Base documentaire (2 étages), recherche sémantique (pgvector),
 -- échéancier, notifications, chat (conversations/messages).
 -- ⚠️ Le super admin n'a AUCUN accès à ces tables (contenu client).
+-- Script IDEMPOTENT : ré-exécutable sans erreur (drop puis recreate).
+-- Les policies storage sont dans 003b_storage_policies.sql.
 -- ============================================================================
 
 create extension if not exists vector;
+
+-- Reprise propre en cas d'exécution précédente partielle
+drop table if exists public.messages cascade;
+drop table if exists public.conversations cascade;
+drop table if exists public.notifications cascade;
+drop table if exists public.deadlines cascade;
+drop table if exists public.extracted_facts cascade;
+drop table if exists public.document_chunks cascade;
+drop table if exists public.documents cascade;
+drop function if exists public.match_chunks(uuid, vector, int);
 
 -- ============================================================================
 -- 1. TABLES
@@ -208,7 +220,8 @@ revoke all on function public.match_chunks(uuid, vector, int) from public, anon;
 grant execute on function public.match_chunks(uuid, vector, int) to authenticated, service_role;
 
 -- ============================================================================
--- 4. STORAGE — bucket privé "documents", chemin {org_id}/{document_id}/{fichier}
+-- 4. STORAGE — bucket privé "documents"
+--    (les policies sont dans 003b_storage_policies.sql)
 -- ============================================================================
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
@@ -229,21 +242,3 @@ values (
 on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
-
-create policy documents_storage_select on storage.objects
-  for select using (
-    bucket_id = 'documents'
-    and public.is_org_member((split_part(name, '/', 1))::uuid)
-  );
-
-create policy documents_storage_insert on storage.objects
-  for insert with check (
-    bucket_id = 'documents'
-    and public.is_org_member((split_part(name, '/', 1))::uuid)
-  );
-
-create policy documents_storage_delete on storage.objects
-  for delete using (
-    bucket_id = 'documents'
-    and public.is_org_member((split_part(name, '/', 1))::uuid)
-  );

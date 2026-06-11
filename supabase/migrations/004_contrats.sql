@@ -1,6 +1,11 @@
 -- ============================================================================
 -- 004_contrats.sql — Holbert jalon 3 : moteur d'audit et de création (Raader)
+-- Script IDEMPOTENT : ré-exécutable sans erreur.
 -- ============================================================================
+
+drop table if exists public.audit_findings cascade;
+drop table if exists public.audits cascade;
+drop table if exists public.generated_documents cascade;
 
 -- Texte intégral extrait du document : évite les ré-extractions à chaque
 -- analyse et permet la vue annotée des audits.
