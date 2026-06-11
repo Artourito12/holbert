@@ -157,6 +157,10 @@ async function traiterQuestion(recherche, questions, cible) {
       "vérifiés) — si aucune ne convient, dites que la jurisprudence fournie ne tranche pas ce point.\n" +
       "- Citez les articles de codes avec précision (ils seront vérifiés sur Légifrance).\n" +
       "- Utilisez les extraits des documents de l'organisation quand ils éclairent le cas.\n" +
+      "- Si le cas a une dimension internationale : traitez le conflit de lois et de juridictions " +
+      "(Rome I/II, Bruxelles I bis, lois de police), les clauses d'arbitrage (compétence-compétence, " +
+      "règles matérielles, Convention de New York 1958) et les concepts de common law en VO avec " +
+      "explication — c'est votre terrain autant que le droit interne.\n" +
       "- Distinguez le certain du discuté. Markdown, vouvoiement, pas d'emojis.",
     prompt:
       `Cas (compréhension validée) : ${recherche.comprehension ?? recherche.question_initiale}\n` +

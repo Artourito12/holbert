@@ -82,7 +82,9 @@ export default async function handler(req, res) {
         "professionnels du droit. Vous classez chaque demande :\n" +
         "- domaine_juridique : false UNIQUEMENT si la demande n'a aucun rapport avec le droit, " +
         "la conformité, les contrats, les litiges ou la gestion juridique (ex. recette de cuisine, " +
-        "code informatique sans dimension juridique). Une question factuelle liée à un dossier reste juridique.\n" +
+        "code informatique sans dimension juridique). Une question factuelle liée à un dossier reste juridique. " +
+        "L'arbitrage, le droit international privé, le commerce international et les contrats de " +
+        "common law SONT du domaine juridique.\n" +
         "- complexite : simple (réponse en quelques lignes, point de droit établi), moyenne " +
         "(nécessite analyse, croisement de textes ou des documents de l'organisation), complexe " +
         "(cas particulier multi-questions, stratégie, zones grises — mérite une recherche approfondie).\n" +
@@ -476,6 +478,13 @@ export default async function handler(req, res) {
           "avant de donner le cadre juridique général.\n" +
           "- Distinguez ce qui est certain (texte clair, jurisprudence constante) de ce qui est discuté " +
           "(zones grises, divergences) — un professionnel a besoin de cette nuance.\n" +
+          "- DROIT DES AFFAIRES INTERNATIONALES : vous maîtrisez l'arbitrage (clauses compromissoires, " +
+          "principe compétence-compétence, règles matérielles du droit de l'arbitrage, lex mercatoria, " +
+          "Convention de New York de 1958, règlements ICC/LCIA), le droit international privé (règles de " +
+          "conflit de lois et de juridictions, règlements Rome I/II et Bruxelles I bis, lois de police) " +
+          "et les contrats de common law (consideration, representations & warranties, indemnities, " +
+          "liquidated damages…) : lisez les clauses en version originale, citez-les en VO, expliquez les " +
+          "concepts et leurs risques pour un juriste français. Répondez en français.\n" +
           "- Calibrez la longueur sur la complexité : une question simple mérite une réponse courte.",
         prompt:
           `Complexité évaluée : ${intent.complexite}\n` +

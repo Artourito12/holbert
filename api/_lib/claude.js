@@ -26,11 +26,23 @@ export async function structured({ model, system, prompt, toolName, description,
 }
 
 /**
- * Sortie structurée AVEC réflexion étendue (extended thinking) : le modèle
- * raisonne longuement avant de remplir l'outil — pour les analyses juridiques
- * lourdes (audit de contrat, extraction, vices de procédure, prescription).
- * La réflexion impose tool_choice auto : si le modèle ne rend pas l'outil,
- * repli automatique sur l'appel forcé sans réflexion.
+ * Opus 4.8 : la réflexion se pilote en mode adaptatif (thinking.type "adaptive")
+ * + output_config.effort — l'ancien format budget_tokens renvoie une erreur 400.
+ * On conserve thinkingBudget dans les signatures (les appelants expriment une
+ * intention de profondeur) et on le traduit ici en niveau d'effort.
+ */
+function effortDepuisBudget(thinkingBudget) {
+  if (thinkingBudget >= 6000) return "high";
+  if (thinkingBudget >= 2500) return "medium";
+  return "low";
+}
+
+/**
+ * Sortie structurée AVEC réflexion adaptative : le modèle raisonne avant de
+ * remplir l'outil — pour les analyses juridiques lourdes (audit de contrat,
+ * extraction, vices de procédure, segmentation de cas).
+ * tool_choice auto : si le modèle ne rend pas l'outil, repli automatique
+ * sur l'appel forcé sans réflexion.
  */
 export async function structuredDeep({
   model = MODEL_SMART,
@@ -45,8 +57,9 @@ export async function structuredDeep({
   try {
     const res = await anthropic.messages.create({
       model,
-      max_tokens: Math.max(maxTokens, thinkingBudget + 4000),
-      thinking: { type: "enabled", budget_tokens: thinkingBudget },
+      max_tokens: maxTokens,
+      thinking: { type: "adaptive" },
+      output_config: { effort: effortDepuisBudget(thinkingBudget) },
       system:
         system +
         `\nIMPORTANT : après votre réflexion, restituez TOUJOURS votre analyse via l'outil ${toolName} — jamais en texte libre.`,
@@ -64,7 +77,7 @@ export async function structuredDeep({
 }
 
 /**
- * Génération de texte, réflexion étendue optionnelle — rédactions à enjeu
+ * Génération de texte, réflexion adaptative optionnelle — rédactions à enjeu
  * (réponses juridiques sourcées, contrats, conclusions, synthèses).
  * thinkingBudget = 0 → pas de réflexion (réponse rapide, questions simples).
  */
@@ -77,12 +90,16 @@ export async function deepText({
 }) {
   const params = {
     model,
-    max_tokens: Math.max(maxTokens, thinkingBudget + 2000),
+    max_tokens: maxTokens,
     system,
     messages: [{ role: "user", content: prompt }],
   };
   if (thinkingBudget >= 1024) {
-    params.thinking = { type: "enabled", budget_tokens: thinkingBudget };
+    params.thinking = { type: "adaptive" };
+    params.output_config = { effort: effortDepuisBudget(thinkingBudget) };
+  } else {
+    // Réponse rapide : pas de réflexion, effort minimal, réponse directe
+    params.output_config = { effort: "low" };
   }
   const res = await anthropic.messages.create(params);
   return res.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");

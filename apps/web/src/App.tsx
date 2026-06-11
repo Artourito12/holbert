@@ -9,7 +9,6 @@ import SignUp from "./pages/SignUp";
 import MotDePasseOublie from "./pages/MotDePasseOublie";
 import Reinitialiser from "./pages/Reinitialiser";
 import CreateOrganization from "./pages/CreateOrganization";
-import Dashboard from "./pages/Dashboard";
 import RaaderHub from "./pages/raader/RaaderHub";
 import AuditDetail from "./pages/raader/AuditDetail";
 import ContratNouveau from "./pages/raader/ContratNouveau";
@@ -88,8 +87,9 @@ export default function App() {
 
         <Route element={<RequireOrg />}>
           <Route element={<AppLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="/assistant" element={<Assistant />} />
+            {/* Le chat Hofraad est l'écran d'accueil (décision du 12/06/2026) */}
+            <Route index element={<Assistant />} />
+            <Route path="/assistant" element={<Navigate to="/" replace />} />
             <Route path="/documents" element={<Documents />} />
             <Route path="/documents/:id" element={<DocumentDetail />} />
             <Route path="/echeancier" element={<Echeancier />} />

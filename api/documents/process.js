@@ -68,6 +68,8 @@ export default async function handler(req, res) {
       system:
         "Vous êtes le classificateur documentaire d'une plateforme juridique française. " +
         "Vous identifiez le type d'un document parmi un registre de types connus. " +
+        "Le document peut être rédigé dans n'importe quelle langue (contrats anglais de common law " +
+        "compris) : classez selon sa NATURE juridique, pas sa langue. " +
         "Si aucun type ne correspond vraiment, répondez type=inconnu plutôt que de forcer une correspondance.",
       prompt:
         `Registre des types connus :\n${JSON.stringify(types, null, 2)}\n\n` +

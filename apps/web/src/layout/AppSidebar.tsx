@@ -7,8 +7,6 @@ import {
   IconAssistant,
   IconBuilding,
   IconCalendar,
-  IconDashboard,
-  IconDocuments,
   IconNormer,
   IconPleiter,
   IconRaader,
@@ -28,11 +26,9 @@ export default function AppSidebar() {
   const open = isExpanded || isHovered || isMobileOpen;
 
   const menuItems: NavItem[] = [
-    { to: "/", label: "Tableau de bord", icon: IconDashboard },
-    { to: "/assistant", label: PLATFORM_NAME, icon: IconAssistant },
-    { to: "/documents", label: "Documents", icon: IconDocuments },
-    { to: "/echeancier", label: "Échéancier", icon: IconCalendar },
+    { to: "/", label: PLATFORM_NAME, icon: IconAssistant },
     { to: "/raader", label: MODULES.raader.name, icon: IconRaader },
+    { to: "/echeancier", label: "Échéancier", icon: IconCalendar },
   ];
 
   const moduleItems: NavItem[] = [
