@@ -212,12 +212,67 @@ export default function AuditDetail() {
             <section className="rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
               <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-800">
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Document
+                  Document stabiloté
                 </h2>
                 <p className="text-xs text-gray-400">
-                  Les passages concernés par un constat sont surlignés.
+                  Cliquez sur un passage surligné : ma note en marge s'épingle
+                  ici (analyse, fondement, reformulation proposée).
                 </p>
               </div>
+
+              {/* Note en marge épinglée */}
+              {passageActif &&
+                (() => {
+                  const f = findings.find((x) => x.id === passageActif);
+                  if (!f) return null;
+                  return (
+                    <div className="sticky top-16 z-10 border-b border-brand-200 bg-brand-25 px-5 py-3 dark:border-brand-500/30 dark:bg-brand-500/10">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          📌 {f.titre}
+                          <Badge size="sm" color={GRAVITE_COLOR[f.gravite]}>
+                            {f.gravite}
+                          </Badge>
+                        </p>
+                        <button
+                          onClick={() => setPassageActif(null)}
+                          className="text-xs text-gray-400 hover:text-gray-600"
+                        >
+                          Fermer ✕
+                        </button>
+                      </div>
+                      {f.explication && (
+                        <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                          {f.explication}
+                        </p>
+                      )}
+                      {f.fondement && (
+                        <p className="mt-1 text-xs font-medium text-gray-500">
+                          Fondement : {f.fondement}
+                        </p>
+                      )}
+                      {f.reformulation && (
+                        <div className="mt-2 rounded-lg bg-white px-3 py-2 dark:bg-gray-900">
+                          <p className="text-xs font-medium text-success-700">
+                            Reformulation proposée
+                          </p>
+                          <p className="mt-0.5 text-xs text-gray-700 dark:text-gray-300">
+                            {f.reformulation}
+                          </p>
+                          <button
+                            onClick={() => {
+                              void navigator.clipboard.writeText(f.reformulation!);
+                              toast.success("Reformulation copiée");
+                            }}
+                            className="mt-1 text-xs font-medium text-success-700 hover:underline"
+                          >
+                            Copier
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               <div className="custom-scrollbar max-h-[75vh] overflow-y-auto px-5 py-4">
                 {texteAnnote ? (
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
@@ -226,7 +281,8 @@ export default function AuditDetail() {
                         <mark
                           key={i}
                           id={`passage-${m.finding.id}`}
-                          className={`rounded px-0.5 ${
+                          onClick={() => setPassageActif(m.finding!.id)}
+                          className={`cursor-pointer rounded px-0.5 transition hover:ring-2 hover:ring-brand-300 ${
                             passageActif === m.finding.id
                               ? "bg-brand-100 ring-2 ring-brand-300"
                               : m.finding.gravite === "majeure"
@@ -235,7 +291,7 @@ export default function AuditDetail() {
                                   ? "bg-warning-100"
                                   : "bg-gray-100 dark:bg-white/10"
                           }`}
-                          title={m.finding.titre}
+                          title={`${m.finding.titre} — cliquez pour la note`}
                         >
                           {m.texte}
                         </mark>

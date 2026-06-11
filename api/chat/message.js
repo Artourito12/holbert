@@ -111,6 +111,24 @@ export default async function handler(req, res) {
               "Si kind=calcul : licenciement (indemnité de licenciement), pension (pension alimentaire, " +
               "revalorisation, arriérés), prescription (délais pour agir), sinon autre",
           },
+          type_generation: {
+            type: "string",
+            enum: ["contrat", "courrier", "autre"],
+            description: "Si kind=generation : contrat complet, courrier/lettre, ou autre",
+          },
+          contrat_type: {
+            type: "string",
+            enum: ["bail-commercial", "prestation-services", "cgv", "autre"],
+            description: "Si un type de contrat précis est identifiable",
+          },
+          document_vise: {
+            type: "string",
+            description: "Si l'utilisateur désigne un document précis (fragment de son nom), sinon omettre",
+          },
+          role_vise: {
+            type: "string",
+            description: "Camp de l'utilisateur s'il est exprimé (bailleur, preneur, prestataire, client…)",
+          },
           params_calcul: {
             type: "object",
             description:
@@ -309,6 +327,32 @@ export default async function handler(req, res) {
       contenu =
         "Voici le calculateur correspondant à votre demande. Ajustez les valeurs : le résultat, " +
         "le détail du calcul et ses sources se mettent à jour en temps réel.";
+    } else if (intent.kind === "audit") {
+      // Audit conversationnel : le contexte d'abord — quel document, QUI je défends, l'objectif
+      widget = {
+        type: "audit_contexte",
+        prefill: {
+          document_hint: intent.document_vise ?? null,
+          role: intent.role_vise ?? null,
+        },
+      };
+      contenu =
+        "Auditons ce contrat. L'analyse dépend entièrement de votre camp — les mêmes clauses ne " +
+        "présentent pas les mêmes risques des deux côtés — et de votre objectif. Confirmez ces " +
+        "éléments ci-dessous : je passerai ensuite le contrat au crible du référentiel (clauses " +
+        "manquantes, illégales, défavorables, incohérences), avec le document surligné et mes notes en marge.";
+    } else if (intent.kind === "generation" && intent.type_generation === "contrat") {
+      widget = {
+        type: "contrat_assistant",
+        prefill: {
+          type: intent.contrat_type && intent.contrat_type !== "autre" ? intent.contrat_type : null,
+          role: intent.role_vise ?? null,
+        },
+      };
+      contenu =
+        "Créons ce contrat ensemble. Je vais vous poser les questions nécessaires une à une — " +
+        "uniquement celles qui comptent pour ce type de contrat, chacune avec son pourquoi. " +
+        "Vous pouvez passer une question : le contrat portera alors la mention [À COMPLÉTER].";
     } else if (intent.kind === "question" || intent.kind === "recherche_base" || intent.kind === "hors_perimetre") {
       const contexte = sources.length
         ? sources.map((s) => `[${s.n}] (${s.nom_fichier})\n${s.extrait}`).join("\n\n")

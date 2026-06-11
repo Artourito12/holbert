@@ -47,4 +47,21 @@ export type Widget =
       /** Suivi de progression + restitution du document de synthèse. */
       type: "recherche_resultat";
       recherche_id: string;
+    }
+  | {
+      /** Collecte du contexte d'audit dans la conversation (document, camp, objectif). */
+      type: "audit_contexte";
+      prefill?: {
+        document_hint?: string | null;
+        role?: string | null;
+        objectif?: string | null;
+      };
+    }
+  | {
+      /** Création de contrat guidée dans la conversation (questions une à une). */
+      type: "contrat_assistant";
+      prefill?: {
+        type?: string | null;
+        role?: string | null;
+      };
     };

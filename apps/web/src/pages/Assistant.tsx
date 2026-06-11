@@ -4,6 +4,8 @@ import type { ChatMessage, Conversation, Widget } from "@holbert/core";
 import { useToast } from "@holbert/ui";
 import CalculatriceWidget from "../widgets/CalculatriceWidget";
 import RechercheWidget from "../widgets/RechercheWidget";
+import AuditContexteWidget from "../widgets/AuditContexteWidget";
+import ContratAssistantWidget from "../widgets/ContratAssistantWidget";
 import { supabase } from "../lib/supabase";
 import { apiPost } from "../lib/api";
 import { useOrg } from "../context/OrgContext";
@@ -187,6 +189,16 @@ export default function Assistant() {
                           rechercheId={(m.widget as unknown as { recherche_id: string }).recherche_id}
                         />
                       )}
+                    {m.widget && (m.widget as unknown as Widget).type === "audit_contexte" && (
+                      <AuditContexteWidget
+                        prefill={(m.widget as unknown as Extract<Widget, { type: "audit_contexte" }>).prefill}
+                      />
+                    )}
+                    {m.widget && (m.widget as unknown as Widget).type === "contrat_assistant" && (
+                      <ContratAssistantWidget
+                        prefill={(m.widget as unknown as Extract<Widget, { type: "contrat_assistant" }>).prefill}
+                      />
+                    )}
                     {m.sources_loi && m.sources_loi.length > 0 && (
                       <div className="mt-3 space-y-1.5 rounded-lg border border-gray-200 px-3 py-2.5 dark:border-gray-700">
                         <p className="text-xs font-medium uppercase text-gray-400">
