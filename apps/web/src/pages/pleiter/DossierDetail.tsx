@@ -17,8 +17,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useOrg } from "../../context/OrgContext";
 import RenduTexte from "../../components/RenduTexte";
 import ScanDossierTab from "./ScanDossierTab";
+import DossierChatTab from "./DossierChatTab";
 
-type Onglet = "chronologie" | "pieces" | "scan" | "analyses";
+type Onglet = "chronologie" | "pieces" | "scan" | "chat" | "analyses";
 
 const ANALYSES_META: Record<AnalyseDossier["type"], { nom: string; desc: string }> = {
   vices: { nom: "Vices de procédure", desc: "Délais et formalités suspects, calculés sur la chronologie" },
@@ -258,6 +259,7 @@ export default function DossierDetail() {
             ["chronologie", `Chronologie (${evenements.length})`],
             ["pieces", `Pièces & bordereau (${pieces.length})`],
             ["scan", "Scan du dossier"],
+            ["chat", "Hofraad"],
             ["analyses", `Analyses (${analyses.length})`],
           ] as [Onglet, string][]
         ).map(([key, label]) => (
@@ -603,6 +605,9 @@ export default function DossierDetail() {
 
       {/* ===================== SCAN DU DOSSIER ===================== */}
       {onglet === "scan" && <ScanDossierTab dossierId={dossier.id} nomDossier={dossier.nom} />}
+
+      {/* ===================== HOFRAAD DANS LE DOSSIER ===================== */}
+      {onglet === "chat" && <DossierChatTab dossierId={dossier.id} />}
 
       {/* ===================== ANALYSES ===================== */}
       {onglet === "analyses" && (

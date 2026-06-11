@@ -36,7 +36,7 @@ const DISCLAIMER =
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
 
-  const { org_id, conversation_id, message, mode } = req.body ?? {};
+  const { org_id, conversation_id, message, mode, dossier_id } = req.body ?? {};
   if (!org_id || !message?.trim()) return res.status(400).json({ error: "org_id et message requis" });
 
   const auth = await requireOrgMember(req, res, org_id);
@@ -46,25 +46,90 @@ export default async function handler(req, res) {
   try {
     // ---- Conversation -------------------------------------------------------
     let convId = conversation_id;
+    let dossierId = null;
     if (convId) {
       const { data: conv } = await admin
         .from("conversations")
-        .select("id, org_id")
+        .select("id, org_id, dossier_id")
         .eq("id", convId)
         .maybeSingle();
       if (!conv || conv.org_id !== org_id) return res.status(404).json({ error: "Conversation introuvable" });
+      dossierId = conv.dossier_id;
     } else {
       const { data: conv, error } = await admin
         .from("conversations")
         .insert({
           org_id,
           created_by: auth.user.id,
+          dossier_id: dossier_id ?? null,
           titre: texte.slice(0, 60) + (texte.length > 60 ? "…" : ""),
         })
         .select()
         .single();
       if (error) return res.status(500).json({ error: error.message });
       convId = conv.id;
+      dossierId = conv.dossier_id;
+    }
+
+    // ---- Historique de la conversation (continuité multi-tours) -------------
+    const { data: precedents } = await admin
+      .from("messages")
+      .select("role, contenu")
+      .eq("conversation_id", convId)
+      .order("created_at", { ascending: false })
+      .limit(8);
+    const historique = (precedents ?? [])
+      .reverse()
+      .map((m) => `${m.role === "user" ? "Utilisateur" : "Hofraad"} : ${m.contenu.slice(0, 1500)}`)
+      .join("\n---\n");
+    const blocHistorique = historique
+      ? `\n=== ÉCHANGES PRÉCÉDENTS DE CETTE CONVERSATION ===\n${historique}\n=== FIN DES ÉCHANGES ===\n`
+      : "";
+
+    // ---- Contexte du dossier contentieux (conversation rattachée) -----------
+    let contexteDossier = "";
+    if (dossierId) {
+      const [{ data: dossier }, { data: piecesDossier }, { data: evenements }, { data: dernierScan }] =
+        await Promise.all([
+          admin.from("dossiers").select("*").eq("id", dossierId).maybeSingle(),
+          admin
+            .from("pieces")
+            .select("camp, numero, intitule, date_piece")
+            .eq("dossier_id", dossierId)
+            .order("camp")
+            .order("numero"),
+          admin
+            .from("evenements")
+            .select("date, titre")
+            .eq("dossier_id", dossierId)
+            .order("date"),
+          admin
+            .from("scans_dossier")
+            .select("document")
+            .eq("dossier_id", dossierId)
+            .eq("statut", "terminee")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
+      if (dossier) {
+        const campLib = { nous: "Nous", adverse: "Adverse", procedure: "Acte" };
+        contexteDossier =
+          `\n=== DOSSIER CONTENTIEUX RATTACHÉ À CETTE CONVERSATION ===\n` +
+          `Dossier : ${dossier.nom} · Parties : ${JSON.stringify(dossier.parties)} · ` +
+          `Juridiction : ${dossier.juridiction ?? "?"} · Procédure : ${dossier.type_procedure ?? "?"} · ` +
+          `Enjeu : ${dossier.enjeu_financier ?? "?"} €\n` +
+          `Pièces :\n${(piecesDossier ?? [])
+            .map((p) => `[${campLib[p.camp]} n° ${p.numero}] ${p.intitule}${p.date_piece ? ` (${p.date_piece})` : ""}`)
+            .join("\n")}\n` +
+          `Chronologie :\n${(evenements ?? []).map((e) => `${e.date} — ${e.titre}`).join("\n")}\n` +
+          (dernierScan?.document
+            ? `\nDernier scan complet du dossier (stratégie, vices, fiches) :\n${dernierScan.document.slice(0, 12000)}\n`
+            : "") +
+          `=== FIN DU DOSSIER ===\n` +
+          `Ancrez vos réponses dans ce dossier : visez les pièces par leur numéro, tenez compte de la ` +
+          `chronologie et de la stratégie du scan. Demandez ce qui manque plutôt que de supposer.\n`;
+      }
     }
 
     await admin.from("messages").insert({
@@ -223,6 +288,8 @@ export default async function handler(req, res) {
           "manière à expliciter l'hypothèse retenue.",
         prompt:
           `Demande de l'utilisateur :\n"""${texte}"""\n` +
+          blocHistorique +
+          contexteDossier +
           profilSeg +
           contexteDocs,
         toolName: "segmenter_cas",
@@ -346,6 +413,8 @@ export default async function handler(req, res) {
           "judiciaire), faites un calculateur d'ordre de grandeur et dites-le clairement en avertissement.",
         prompt:
           `Demande de calcul : ${texte}\n` +
+          blocHistorique +
+          contexteDossier +
           profilCalc +
           `\nDate du jour : ${new Date().toISOString().slice(0, 10)}`,
         toolName: "concevoir_calculateur",
@@ -506,6 +575,8 @@ export default async function handler(req, res) {
 
       const promptGen =
         `Demande : ${texte}\n` +
+        blocHistorique +
+        contexteDossier +
         profilGen +
         (modele
           ? `\nMODÈLE DU CABINET (${modele.nom_fichier}) :\n` +
@@ -587,6 +658,8 @@ export default async function handler(req, res) {
           "- Calibrez la longueur sur la complexité : une question simple mérite une réponse courte.",
         prompt:
           `Complexité évaluée : ${intent.complexite}\n` +
+          blocHistorique +
+          contexteDossier +
           `Extraits des documents de l'organisation :\n${contexte}\n` +
           profil +
           `\nDemande : ${texte}`,

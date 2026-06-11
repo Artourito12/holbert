@@ -149,6 +149,8 @@ export type Conversation = {
   org_id: string;
   created_by: string;
   titre: string;
+  /** Conversation rattachée à un dossier contentieux (le chat en connaît le contexte). */
+  dossier_id: string | null;
   created_at: string;
 };
 
