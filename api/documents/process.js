@@ -2,7 +2,7 @@ import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
 import { structured, MODEL_FAST } from "../_lib/claude.js";
 import { embed } from "../_lib/openai.js";
-import { extraireTexte, chunker } from "../_lib/extract-text.js";
+import { extraireTexteAvecOcr, chunker } from "../_lib/extract-text.js";
 import { typesPourClassification } from "../_lib/referentiels.js";
 
 async function echec(doc, raison) {
@@ -39,11 +39,11 @@ export default async function handler(req, res) {
     if (dlError) return res.status(500).json(await echec(doc, `Fichier inaccessible : ${dlError.message}`));
 
     const buffer = Buffer.from(await blob.arrayBuffer());
-    const { texte } = await extraireTexte(buffer, doc.mime);
+    const { texte, ocr } = await extraireTexteAvecOcr(buffer, doc.mime);
 
     if (!texte || texte.length < 40) {
       return res.status(422).json(
-        await echec(doc, "Texte illisible — document scanné en image ? L'OCR arrive à un prochain jalon.")
+        await echec(doc, "Texte illisible, même après OCR — vérifiez la qualité du scan et réessayez.")
       );
     }
 
@@ -130,6 +130,7 @@ export default async function handler(req, res) {
       confiance: classification.confiance,
       chunks: chunks.length,
       doublon_de: versionDe,
+      ocr,
     });
 
     return res.status(200).json({ document: updated });

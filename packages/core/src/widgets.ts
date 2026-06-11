@@ -64,4 +64,38 @@ export type Widget =
         type?: string | null;
         role?: string | null;
       };
+    }
+  | {
+      /** Calculateur ad hoc généré par l'IA (formules évaluées côté client, docs/09 §6). */
+      type: "calculatrice_dynamique";
+      spec: CalculatriceDynamiqueSpec;
     };
+
+export type ChampDynamique = {
+  id: string;
+  label: string;
+  type: "nombre" | "curseur" | "choix";
+  min?: number;
+  max?: number;
+  step?: number;
+  defaut?: number;
+  unite?: string;
+  options?: { valeur: number; label: string }[];
+};
+
+export type CalculatriceDynamiqueSpec = {
+  titre: string;
+  description?: string;
+  champs: ChampDynamique[];
+  resultats: {
+    id: string;
+    label: string;
+    /** Expression arithmétique sur les ids des champs (évaluateur sûr). */
+    formule: string;
+    format?: "euros" | "nombre" | "pourcent";
+    accent?: boolean;
+  }[];
+  sources: { libelle: string; reference: string }[];
+  avertissements?: string[];
+  date_validite?: string;
+};

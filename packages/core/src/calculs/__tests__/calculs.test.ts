@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calculerIndemniteLicenciement } from "../licenciement";
 import { calculerPensionArrieres } from "../pension";
 import { calculerPrescription } from "../prescription";
+import { evaluerFormule } from "../evaluateur";
 
 /** Normalise un montant formaté fr-FR ("5 000,00 €") en "5000,00". */
 function montant(valeur: string): string {
@@ -84,6 +85,25 @@ describe("Pension alimentaire — revalorisation et arriérés (golden)", () => 
       date_fin: "2025-06-01",
     });
     expect(r.avertissements.some((a) => a.includes("prescrites"))).toBe(true);
+  });
+});
+
+describe("Évaluateur de formules (widgets dynamiques)", () => {
+  it("arithmétique et priorités", () => {
+    expect(evaluerFormule("2 + 3 * 4", {})).toBe(14);
+    expect(evaluerFormule("(2 + 3) * salaire", { salaire: 100 })).toBe(500);
+  });
+
+  it("ternaire, comparaisons et fonctions", () => {
+    expect(evaluerFormule("anciennete > 10 ? base * 0.5 : base * 0.25", { anciennete: 12, base: 1000 })).toBe(500);
+    expect(evaluerFormule("min(plafond, montant)", { plafond: 300, montant: 450 })).toBe(300);
+    expect(evaluerFormule("round(7.6)", {})).toBe(8);
+  });
+
+  it("refuse les variables inconnues et les caractères interdits", () => {
+    expect(() => evaluerFormule("inconnu + 1", {})).toThrow();
+    expect(() => evaluerFormule("alert(1)", {})).toThrow();
+    expect(() => evaluerFormule("a; b", { a: 1, b: 2 })).toThrow();
   });
 });
 

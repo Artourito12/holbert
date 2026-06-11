@@ -1,7 +1,7 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
 import { structuredDeep } from "../_lib/claude.js";
-import { extraireTexte } from "../_lib/extract-text.js";
+import { extraireTexteAvecOcr } from "../_lib/extract-text.js";
 import { getReferentiel } from "../_lib/referentiels.js";
 import { contexteOrganisation } from "../_lib/org-context.js";
 
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
         .from("documents")
         .download(doc.storage_path);
       if (dlError) throw new Error(`Fichier inaccessible : ${dlError.message}`);
-      ({ texte } = await extraireTexte(Buffer.from(await blob.arrayBuffer()), doc.mime));
+      ({ texte } = await extraireTexteAvecOcr(Buffer.from(await blob.arrayBuffer()), doc.mime));
     }
 
     const OBJECTIFS = {

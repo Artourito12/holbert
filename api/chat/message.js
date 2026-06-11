@@ -327,6 +327,98 @@ export default async function handler(req, res) {
       contenu =
         "Voici le calculateur correspondant à votre demande. Ajustez les valeurs : le résultat, " +
         "le détail du calcul et ses sources se mettent à jour en temps réel.";
+    } else if (intent.kind === "calcul") {
+      // Calcul hors catalogue : l'IA construit un calculateur ad hoc (docs/09 §6)
+      const profilCalc = await contexteOrganisation(org_id);
+      const spec = await structuredDeep({
+        system:
+          "Vous concevez un CALCULATEUR JURIDIQUE INTERACTIF ad hoc pour un professionnel du droit. Règles :\n" +
+          "- champs : uniquement type nombre, curseur ou choix (PAS de dates — utilisez des durées en " +
+          "mois/années via nombre/curseur). ids en snake_case.\n" +
+          "- formules : expressions arithmétiques sur les ids des champs, opérateurs + - * / % () " +
+          "comparaisons, ternaire (cond ? a : b), fonctions min/max/abs/round/floor/ceil/pow. RIEN d'autre.\n" +
+          "- sources OBLIGATOIRES : textes et barèmes qui fondent chaque taux/seuil utilisé.\n" +
+          "- avertissements : limites de la simulation, et SURTOUT tout barème dont la valeur actuelle " +
+          "doit être vérifiée (indiquez où la vérifier).\n" +
+          "- Si le calcul n'est PAS automatisable sérieusement (trop dépendant d'une appréciation " +
+          "judiciaire), faites un calculateur d'ordre de grandeur et dites-le clairement en avertissement.",
+        prompt:
+          `Demande de calcul : ${texte}\n` +
+          profilCalc +
+          `\nDate du jour : ${new Date().toISOString().slice(0, 10)}`,
+        toolName: "concevoir_calculateur",
+        description: "Spécifie le calculateur interactif",
+        schema: {
+          type: "object",
+          properties: {
+            titre: { type: "string" },
+            description: { type: "string" },
+            champs: {
+              type: "array",
+              minItems: 1,
+              maxItems: 8,
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string", pattern: "^[a-z][a-z0-9_]*$" },
+                  label: { type: "string" },
+                  type: { type: "string", enum: ["nombre", "curseur", "choix"] },
+                  min: { type: "number" },
+                  max: { type: "number" },
+                  step: { type: "number" },
+                  defaut: { type: "number" },
+                  unite: { type: "string" },
+                  options: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: { valeur: { type: "number" }, label: { type: "string" } },
+                      required: ["valeur", "label"],
+                    },
+                  },
+                },
+                required: ["id", "label", "type"],
+              },
+            },
+            resultats: {
+              type: "array",
+              minItems: 1,
+              maxItems: 5,
+              items: {
+                type: "object",
+                properties: {
+                  id: { type: "string" },
+                  label: { type: "string" },
+                  formule: { type: "string" },
+                  format: { type: "string", enum: ["euros", "nombre", "pourcent"] },
+                  accent: { type: "boolean" },
+                },
+                required: ["id", "label", "formule"],
+              },
+            },
+            sources: {
+              type: "array",
+              minItems: 1,
+              items: {
+                type: "object",
+                properties: { libelle: { type: "string" }, reference: { type: "string" } },
+                required: ["libelle", "reference"],
+              },
+            },
+            avertissements: { type: "array", items: { type: "string" } },
+          },
+          required: ["titre", "champs", "resultats", "sources"],
+        },
+        thinkingBudget: 5000,
+        maxTokens: 8000,
+      });
+
+      spec.date_validite = new Date().toISOString().slice(0, 10);
+      widget = { type: "calculatrice_dynamique", spec };
+      contenu =
+        "Ce calcul ne fait pas partie de mon catalogue certifié : je vous ai construit un calculateur " +
+        "sur mesure ci-dessous. **Vérifiez les barèmes cités dans les sources et avertissements** — " +
+        "contrairement aux calculateurs certifiés, celui-ci n'est pas verrouillé par des tests.";
     } else if (intent.kind === "audit") {
       // Audit conversationnel : le contexte d'abord — quel document, QUI je défends, l'objectif
       widget = {

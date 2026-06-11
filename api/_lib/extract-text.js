@@ -1,5 +1,6 @@
 import { extractText, getDocumentProxy } from "unpdf";
 import mammoth from "mammoth";
+import { anthropic, MODEL_FAST } from "./claude.js";
 
 /**
  * Extrait le texte brut d'un document selon son type MIME.
@@ -25,8 +26,54 @@ export async function extraireTexte(buffer, mime) {
     return { texte: Buffer.from(buffer).toString("utf8").trim(), pages: null };
   }
 
-  // Images : OCR non couvert à ce jalon
   return { texte: "", pages: null };
+}
+
+const OCR_MAX_OCTETS = 20 * 1024 * 1024;
+const OCR_MIMES = ["application/pdf", "image/png", "image/jpeg"];
+
+/**
+ * Extraction avec OCR de secours : si le texte natif est vide (scan, photo),
+ * le document passe par la vision Claude pour transcription (docs/09 §7).
+ */
+export async function extraireTexteAvecOcr(buffer, mime) {
+  const base = await extraireTexte(buffer, mime);
+  if (base.texte && base.texte.length >= 40) return { ...base, ocr: false };
+  if (!OCR_MIMES.includes(mime) || buffer.byteLength > OCR_MAX_OCTETS) {
+    return { ...base, ocr: false };
+  }
+
+  const data = Buffer.from(buffer).toString("base64");
+  const bloc =
+    mime === "application/pdf"
+      ? { type: "document", source: { type: "base64", media_type: "application/pdf", data } }
+      : { type: "image", source: { type: "base64", media_type: mime, data } };
+
+  const res = await anthropic.messages.create({
+    model: MODEL_FAST,
+    max_tokens: 8000,
+    messages: [
+      {
+        role: "user",
+        content: [
+          bloc,
+          {
+            type: "text",
+            text:
+              "Transcrivez intégralement et fidèlement le texte de ce document, sans commentaire ni " +
+              "résumé. Conservez la structure (titres, paragraphes, listes). Marquez [illisible] " +
+              "pour les passages indéchiffrables.",
+          },
+        ],
+      },
+    ],
+  });
+  const texte = res.content
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("\n")
+    .trim();
+  return { texte, pages: base.pages, ocr: texte.length >= 40 };
 }
 
 /**

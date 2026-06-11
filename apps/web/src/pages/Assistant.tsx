@@ -6,6 +6,7 @@ import CalculatriceWidget from "../widgets/CalculatriceWidget";
 import RechercheWidget from "../widgets/RechercheWidget";
 import AuditContexteWidget from "../widgets/AuditContexteWidget";
 import ContratAssistantWidget from "../widgets/ContratAssistantWidget";
+import CalculatriceDynamiqueWidget from "../widgets/CalculatriceDynamiqueWidget";
 import { supabase } from "../lib/supabase";
 import { apiPost } from "../lib/api";
 import { useOrg } from "../context/OrgContext";
@@ -197,6 +198,11 @@ export default function Assistant() {
                     {m.widget && (m.widget as unknown as Widget).type === "contrat_assistant" && (
                       <ContratAssistantWidget
                         prefill={(m.widget as unknown as Extract<Widget, { type: "contrat_assistant" }>).prefill}
+                      />
+                    )}
+                    {m.widget && (m.widget as unknown as Widget).type === "calculatrice_dynamique" && (
+                      <CalculatriceDynamiqueWidget
+                        spec={(m.widget as unknown as Extract<Widget, { type: "calculatrice_dynamique" }>).spec}
                       />
                     )}
                     {m.sources_loi && m.sources_loi.length > 0 && (
