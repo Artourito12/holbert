@@ -7,8 +7,8 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // Chargement minimal de .env.local (pas de dépendance dotenv)
-for (const ligne of readFileSync(join(root, ".env.local"), "utf8").split("\n")) {
-  const m = ligne.match(/^([A-Z_]+)=(.*)$/);
+for (const ligne of readFileSync(join(root, ".env.local"), "utf8").replace(/^﻿/, "").split("\n")) {
+  const m = ligne.trim().match(/^([A-Z_]+)=(.*)$/);
   if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
 }
 

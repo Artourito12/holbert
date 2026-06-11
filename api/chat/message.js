@@ -116,13 +116,22 @@ export default async function handler(req, res) {
     });
 
     // ---- 2. Recherche SYSTÉMATIQUE dans la base de l'org ---------------------
-    const [embedding] = await embed([intent.requete_recherche || texte]);
-    const { data: chunks } = await admin.rpc("match_chunks", {
-      p_org: org_id,
-      p_embedding: embedding,
-      p_count: 8,
-    });
-    const pertinents = (chunks ?? []).filter((c) => c.similarite > 0.25);
+    // Dégradation douce : si les embeddings sont indisponibles (quota OpenAI…),
+    // le chat répond sans la base documentaire au lieu de planter.
+    let pertinents = [];
+    let rechercheKo = false;
+    try {
+      const [embedding] = await embed([intent.requete_recherche || texte]);
+      const { data: chunks } = await admin.rpc("match_chunks", {
+        p_org: org_id,
+        p_embedding: embedding,
+        p_count: 8,
+      });
+      pertinents = (chunks ?? []).filter((c) => c.similarite > 0.25);
+    } catch (e) {
+      rechercheKo = true;
+      console.error("[Holbert API] recherche indisponible:", e.message);
+    }
 
     const docIds = [...new Set(pertinents.map((c) => c.document_id))];
     const { data: docs } = docIds.length
@@ -156,7 +165,9 @@ export default async function handler(req, res) {
     } else if (intent.kind === "question" || intent.kind === "recherche_base" || intent.kind === "hors_perimetre") {
       const contexte = sources.length
         ? sources.map((s) => `[${s.n}] (${s.nom_fichier})\n${s.extrait}`).join("\n\n")
-        : "(aucun document pertinent dans la base de l'organisation)";
+        : rechercheKo
+          ? "(recherche documentaire temporairement indisponible — répondez sur le droit général et signalez-le)"
+          : "(aucun document pertinent dans la base de l'organisation)";
 
       const reponse = await anthropic.messages.create({
         model: MODEL_SMART,

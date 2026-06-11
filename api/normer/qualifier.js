@@ -38,16 +38,21 @@ export default async function handler(req, res) {
       .order("usage_count", { ascending: false })
       .limit(30);
 
-    // 2. Recherche systématique dans la base documentaire
-    const [embedding] = await embed([`${demande.objet}\n${demande.description ?? ""}`]);
-    const { data: chunks } = await admin.rpc("match_chunks", {
-      p_org: demande.org_id,
-      p_embedding: embedding,
-      p_count: 5,
-    });
-    const passages = (chunks ?? [])
-      .filter((c) => c.similarite > 0.25)
-      .map((c) => c.contenu.slice(0, 400));
+    // 2. Recherche dans la base documentaire (dégradation douce si embeddings KO)
+    let passages = [];
+    try {
+      const [embedding] = await embed([`${demande.objet}\n${demande.description ?? ""}`]);
+      const { data: chunks } = await admin.rpc("match_chunks", {
+        p_org: demande.org_id,
+        p_embedding: embedding,
+        p_count: 5,
+      });
+      passages = (chunks ?? [])
+        .filter((c) => c.similarite > 0.25)
+        .map((c) => c.contenu.slice(0, 400));
+    } catch (e) {
+      console.error("[Holbert API] qualifier — recherche indisponible:", e.message);
+    }
 
     // 3. Qualification + proposition de réponse
     const out = await structured({
