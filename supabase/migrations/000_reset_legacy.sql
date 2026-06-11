@@ -26,9 +26,9 @@ drop function if exists public.user_org_ids() cascade;
 drop function if exists public.user_org_role(uuid) cascade;
 drop function if exists public.touch_updated_at() cascade;
 
--- Bucket storage legacy
-delete from storage.objects where bucket_id = 'contracts';
-delete from storage.buckets where id = 'contracts';
+-- Bucket storage legacy : Supabase interdit le delete SQL direct sur storage.
+-- → À supprimer via le dashboard : Storage > bucket "contracts" > ⋯ > Delete bucket
+--   (sans urgence : le bucket orphelin ne gêne pas les migrations).
 
 -- Vérification : doit retourner 0 ligne
 select tablename from pg_tables
