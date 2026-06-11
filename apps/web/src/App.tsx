@@ -94,15 +94,14 @@ export default function App() {
             <Route path="/documents/:id" element={<DocumentDetail />} />
             <Route path="/echeancier" element={<Echeancier />} />
             <Route path="/organisation" element={<Organisation />} />
-            <Route element={<RequireModule module="raader" />}>
-              <Route path="/raader" element={<RaaderHub />} />
-              <Route path="/audits/:id" element={<AuditDetail />} />
-              <Route path="/contrats/nouveau" element={<ContratNouveau />} />
-              <Route path="/contrats/:id" element={<ContratGenere />} />
-              <Route path="/courriers/nouveau" element={<CourrierNouveau />} />
-              <Route path="/calculateurs" element={<CalculateursListe />} />
-              <Route path="/calculateurs/:competence" element={<CalculateurPage />} />
-            </Route>
+            {/* Outils Hofraad — ouverts à toutes les organisations (docs/09 §8) */}
+            <Route path="/raader" element={<RaaderHub />} />
+            <Route path="/audits/:id" element={<AuditDetail />} />
+            <Route path="/contrats/nouveau" element={<ContratNouveau />} />
+            <Route path="/contrats/:id" element={<ContratGenere />} />
+            <Route path="/courriers/nouveau" element={<CourrierNouveau />} />
+            <Route path="/calculateurs" element={<CalculateursListe />} />
+            <Route path="/calculateurs/:competence" element={<CalculateurPage />} />
             <Route element={<RequireModule module="pleiter" />}>
               <Route path="/pleiter" element={<PleiterHub />} />
               <Route path="/dossiers/:id" element={<DossierDetail />} />

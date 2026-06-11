@@ -74,19 +74,27 @@ export default async function handler(req, res) {
       contenu: texte,
     });
 
-    // ---- 1. Routeur d'intention ---------------------------------------------
+    // ---- 1. Routeur : domaine, intention, complexité --------------------------
     const intent = await structured({
       model: MODEL_FAST,
       system:
-        "Vous êtes le routeur d'intention d'une plateforme juridique française. " +
-        "Vous classez la demande de l'utilisateur et détectez si elle relève du conseil " +
-        "individualisé réglementé (stratégie personnelle à fort enjeu, représentation, contentieux engagé).",
+        "Vous êtes le routeur du chat Hofraad, assistant de recherche juridique français pour " +
+        "professionnels du droit. Vous classez chaque demande :\n" +
+        "- domaine_juridique : false UNIQUEMENT si la demande n'a aucun rapport avec le droit, " +
+        "la conformité, les contrats, les litiges ou la gestion juridique (ex. recette de cuisine, " +
+        "code informatique sans dimension juridique). Une question factuelle liée à un dossier reste juridique.\n" +
+        "- complexite : simple (réponse en quelques lignes, point de droit établi), moyenne " +
+        "(nécessite analyse, croisement de textes ou des documents de l'organisation), complexe " +
+        "(cas particulier multi-questions, stratégie, zones grises — mérite une recherche approfondie).\n" +
+        "- besoin_professionnel : true si le cas exige plus que de l'information (représentation, urgence procédurale).",
       prompt: `Demande de l'utilisateur :\n"""${texte}"""`,
       toolName: "router_intention",
       description: "Classe l'intention de la demande",
       schema: {
         type: "object",
         properties: {
+          domaine_juridique: { type: "boolean" },
+          complexite: { type: "string", enum: ["simple", "moyenne", "complexe"] },
           kind: { type: "string", enum: KINDS },
           besoin_professionnel: {
             type: "boolean",
@@ -111,10 +119,30 @@ export default async function handler(req, res) {
               "date_debut, date_fin, type_action, point_depart — uniquement si explicites)",
           },
         },
-        required: ["kind", "besoin_professionnel", "requete_recherche"],
+        required: ["domaine_juridique", "complexite", "kind", "besoin_professionnel", "requete_recherche"],
       },
       maxTokens: 600,
     });
+
+    // ---- Garde-fou : Hofraad ne traite que le droit ---------------------------
+    if (intent.domaine_juridique === false) {
+      const { data: refus, error: refusError } = await admin
+        .from("messages")
+        .insert({
+          conversation_id: convId,
+          org_id,
+          role: "assistant",
+          contenu:
+            "Je suis Hofraad, votre assistant de recherche juridique : je ne traite que les questions " +
+            "de droit, de conformité, de contrats et de gestion juridique. Reformulez votre demande " +
+            "sous cet angle si elle a une dimension juridique — sinon, je ne vous serai d'aucune aide.",
+          intent,
+        })
+        .select()
+        .single();
+      if (refusError) return res.status(500).json({ error: refusError.message });
+      return res.status(200).json({ conversation_id: convId, message: refus });
+    }
 
     // ---- 2. Recherche SYSTÉMATIQUE dans la base de l'org ---------------------
     // Dégradation douce : si les embeddings sont indisponibles (quota OpenAI…),
@@ -170,23 +198,46 @@ export default async function handler(req, res) {
           ? "(recherche documentaire temporairement indisponible — répondez sur le droit général et signalez-le)"
           : "(aucun document pertinent dans la base de l'organisation)";
 
+      // Profondeur adaptée à la complexité (docs/09 §3) — la recherche
+      // approfondie segmentée (phase B) prendra le relais pour "complexe".
+      const PROFONDEUR = {
+        simple: { thinkingBudget: 0, maxTokens: 2500 },
+        moyenne: { thinkingBudget: 3000, maxTokens: 6000 },
+        complexe: { thinkingBudget: 10000, maxTokens: 12000 },
+      };
+      const profondeur = PROFONDEUR[intent.complexite] ?? PROFONDEUR.moyenne;
+
       const profil = await contexteOrganisation(org_id);
       contenu = await deepText({
         system:
-          "Vous êtes l'assistant juridique d'une plateforme française. Règles impératives :\n" +
-          "- Vouvoiement, français précis, ton direct et pédagogique, pas d'emojis.\n" +
-          "- Appuyez-vous d'abord sur les extraits de documents fournis, cités par [n].\n" +
-          "- Si l'information n'est pas dans les documents, dites-le explicitement avant " +
-          "de donner le cadre juridique général (avec les textes applicables).\n" +
-          "- Vous fournissez de l'information juridique, jamais de conseil individualisé.\n" +
-          "- Restez concis : répondez à la question, pas plus.",
+          "Vous êtes Hofraad, assistant de recherche juridique français pour AVOCATS et JURISTES — " +
+          "des professionnels avec des cas souvent très particuliers. Règles impératives :\n" +
+          "- Vouvoiement, ton confraternel et précis, pas d'emojis.\n" +
+          "- TOUT est sourcé : citez les textes exacts (article, code), la jurisprudence pertinente " +
+          "(juridiction, date, numéro de pourvoi), et les extraits de documents fournis par [n].\n" +
+          "- LE CONTEXTE D'ABORD : si des éléments indispensables manquent pour répondre avec rigueur " +
+          "(camp défendu, dates précises, juridiction, qualité des parties), commencez par poser ces " +
+          "questions — n'inventez jamais un contexte. Pour une question simple et générale, répondez directement.\n" +
+          "- Si l'information n'est pas dans les documents de l'organisation, dites-le explicitement " +
+          "avant de donner le cadre juridique général.\n" +
+          "- Distinguez ce qui est certain (texte clair, jurisprudence constante) de ce qui est discuté " +
+          "(zones grises, divergences) — un professionnel a besoin de cette nuance.\n" +
+          "- Calibrez la longueur sur la complexité : une question simple mérite une réponse courte.",
         prompt:
+          `Complexité évaluée : ${intent.complexite}\n` +
           `Extraits des documents de l'organisation :\n${contexte}\n` +
           profil +
-          `\nQuestion : ${texte}`,
-        thinkingBudget: 2000,
-        maxTokens: 5000,
+          `\nDemande : ${texte}`,
+        thinkingBudget: profondeur.thinkingBudget,
+        maxTokens: profondeur.maxTokens,
       });
+
+      if (intent.complexite === "complexe") {
+        contenu +=
+          "\n\n*Cas complexe détecté : la recherche approfondie segmentée (analyse question par " +
+          "question, sources Légifrance et Judilibre exhaustives, document de synthèse) arrive très " +
+          "prochainement dans Hofraad.*";
+      }
     } else {
       contenu =
         `J'ai bien compris votre demande (${intent.kind.replace("_", " ")}), mais cette compétence n'est pas encore ouverte : ` +

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Entitlement, ModuleId, Profile } from "@holbert/core";
-import { MODULES, MODULE_IDS, PLATFORM_NAME } from "@holbert/core";
+import { MODULES, ACTIVABLE_MODULE_IDS, PLATFORM_NAME } from "@holbert/core";
 import { supabase } from "../../lib/supabase";
 import { useOrg } from "../../context/OrgContext";
 
@@ -152,7 +152,7 @@ export default function AdminPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex flex-wrap gap-2">
-                        {MODULE_IDS.map((module) => {
+                        {ACTIVABLE_MODULE_IDS.map((module) => {
                           const active = org.entitlements.some(
                             (e) => e.module === module && e.active
                           );

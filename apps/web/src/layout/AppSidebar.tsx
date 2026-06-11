@@ -29,17 +29,13 @@ export default function AppSidebar() {
 
   const menuItems: NavItem[] = [
     { to: "/", label: "Tableau de bord", icon: IconDashboard },
-    { to: "/assistant", label: "Assistant", icon: IconAssistant },
+    { to: "/assistant", label: PLATFORM_NAME, icon: IconAssistant },
     { to: "/documents", label: "Documents", icon: IconDocuments },
     { to: "/echeancier", label: "Échéancier", icon: IconCalendar },
+    { to: "/raader", label: MODULES.raader.name, icon: IconRaader },
   ];
 
   const moduleItems: NavItem[] = [
-    hasModule("raader") && {
-      to: "/raader",
-      label: MODULES.raader.name,
-      icon: IconRaader,
-    },
     hasModule("pleiter") && {
       to: "/pleiter",
       label: MODULES.pleiter.name,

@@ -4,8 +4,8 @@ export const anthropic = new Anthropic(); // ANTHROPIC_API_KEY
 
 /** Classification, routage : rapide et économique — pas de réflexion étendue. */
 export const MODEL_FAST = "claude-haiku-4-5-20251001";
-/** Analyse et rédaction juridique : qualité maximale. */
-export const MODEL_SMART = "claude-fable-5";
+/** Analyse et rédaction juridique — Opus 4.8 (décision coût/qualité, docs/09 §2). */
+export const MODEL_SMART = "claude-opus-4-8";
 
 /**
  * Sortie structurée FORCÉE (tool use), sans réflexion étendue.
@@ -64,8 +64,9 @@ export async function structuredDeep({
 }
 
 /**
- * Génération de texte AVEC réflexion étendue — rédactions à enjeu
+ * Génération de texte, réflexion étendue optionnelle — rédactions à enjeu
  * (réponses juridiques sourcées, contrats, conclusions, synthèses).
+ * thinkingBudget = 0 → pas de réflexion (réponse rapide, questions simples).
  */
 export async function deepText({
   model = MODEL_SMART,
@@ -74,12 +75,15 @@ export async function deepText({
   thinkingBudget = 3000,
   maxTokens = 8000,
 }) {
-  const res = await anthropic.messages.create({
+  const params = {
     model,
     max_tokens: Math.max(maxTokens, thinkingBudget + 2000),
-    thinking: { type: "enabled", budget_tokens: thinkingBudget },
     system,
     messages: [{ role: "user", content: prompt }],
-  });
+  };
+  if (thinkingBudget >= 1024) {
+    params.thinking = { type: "enabled", budget_tokens: thinkingBudget };
+  }
+  const res = await anthropic.messages.create(params);
   return res.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
 }

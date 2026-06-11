@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { MODULES, PLATFORM_NAME, SUITE_NAME } from "@holbert/core";
+import { MODULES, PLATFORM_NAME } from "@holbert/core";
 import { useAuth } from "../context/AuthContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10,17 +10,19 @@ import { useAuth } from "../context/AuthContext";
 
 const MODULES_LANDING = [
   {
-    id: "raader",
-    nom: MODULES.raader.name,
-    accroche: "Le conseiller juridique du quotidien",
-    cible: "Particuliers · TPE · opérationnels",
+    id: "hofraad",
+    nom: PLATFORM_NAME,
+    accroche: "L'assistant de recherche juridique",
+    cible: "Avocats · juristes · professionnels du droit — inclus pour tous",
     couleur: "#b22a45",
     fond: "#fbeaee",
+    description:
+      "Le cœur de la plateforme : une IA qui ne traite que le droit, adapte sa profondeur de réflexion à la complexité du cas, et source chaque affirmation.",
     features: [
-      "Posez vos questions : réponses sourcées sur VOS documents, articles vérifiés sur Légifrance",
-      "Audit de contrat clause par clause : score de risque, clauses illégales, reformulations prêtes à copier",
-      "Création de contrats et courriers avec leurs fondements juridiques, export Word",
-      "Calculateurs intégrés : licenciement, pension alimentaire, prescription — détail du calcul inclus",
+      "Réponses sourcées avec liens : textes vérifiés sur Légifrance, jurisprudence, documents de votre organisation cités passage par passage",
+      "Recherche approfondie : l'IA segmente votre cas en questions, vous les validez, elle produit un document de synthèse argumenté",
+      "Calculs, contrats, courriers et audits directement dans la conversation — l'IA pose les questions nécessaires, jamais plus",
+      "Le contexte avant tout : elle sait qui vous défendez avant de prendre position",
     ],
   },
   {
@@ -30,6 +32,7 @@ const MODULES_LANDING = [
     cible: "Avocats · cabinets",
     couleur: "#026aa2",
     fond: "#f0f9ff",
+    description: MODULES.pleiter.description,
     features: [
       "Déposez les pièces en vrac : chronologie datée et sourcée construite automatiquement",
       "Bordereau de pièces numéroté, réordonnable, exporté en un clic",
@@ -44,6 +47,7 @@ const MODULES_LANDING = [
     cible: "Directions juridiques · juristes d'entreprise",
     couleur: "#5b21b6",
     fond: "#ede9fe",
+    description: MODULES.normer.description,
     features: [
       "Front Door : toutes les demandes des opérationnels entrent, sont qualifiées et priorisées",
       "L'IA propose, le juriste valide — chaque réponse part signée par un humain",
@@ -67,8 +71,8 @@ const FAQ_ITEMS = [
     a: "Chaque article de loi cité dans une réponse est vérifié automatiquement contre la base officielle Légifrance : vous voyez en un coup d'œil s'il est en vigueur, modifié, ou introuvable. Et chaque réponse appuyée sur vos documents cite le passage exact, cliquable.",
   },
   {
-    q: "Faut-il prendre les trois modules ?",
-    a: `Non. Chaque module fonctionne et se souscrit séparément. Mais ils partagent la même base documentaire : combinés (la suite ${SUITE_NAME}), une question d'opérationnel peut devenir un audit de contrat puis alimenter un dossier contentieux sans jamais ressaisir quoi que ce soit.`,
+    q: "Faut-il prendre les modules en plus du chat ?",
+    a: "Le chat est inclus pour toutes les organisations — c'est le cœur du produit. Les modules Contentieux et Compliance s'activent séparément selon votre métier, et partagent la même base documentaire : un contrat audité dans le chat peut alimenter un dossier contentieux sans rien ressaisir.",
   },
   {
     q: "Combien de temps prend la mise en place ?",
@@ -259,9 +263,9 @@ export default function Landing() {
       <section id="modules" className="bg-gray-50 py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionHeader
-            kicker="Trois modules, une plateforme"
-            titre="Chacun se suffit. Ensemble, ils se répondent."
-            sous={`Souscrits séparément, ils partagent la même base documentaire. Les trois réunis forment la suite ${SUITE_NAME}.`}
+            kicker="L'assistant + deux modules"
+            titre={`${PLATFORM_NAME} au centre, des modules métiers autour`}
+            sous="Le chat est inclus pour toutes les organisations. Les modules Contentieux et Compliance s'activent selon vos besoins — tous partagent la même base documentaire."
           />
           <div className="space-y-8">
             {MODULES_LANDING.map((m, i) => (
@@ -282,7 +286,7 @@ export default function Landing() {
                     {m.nom}
                   </h3>
                   <p className="mt-1 text-lg font-medium text-gray-900">{m.accroche}</p>
-                  <p className="mt-2 text-sm text-gray-500">{MODULES[m.id as keyof typeof MODULES].description}</p>
+                  <p className="mt-2 text-sm text-gray-500">{m.description}</p>
                 </div>
                 <ul className="space-y-3 lg:col-span-3 lg:[direction:ltr]">
                   {m.features.map((f) => (
@@ -378,8 +382,8 @@ export default function Landing() {
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
           <SectionHeader
             kicker="Tarifs"
-            titre="Un abonnement par module"
-            sous={`${MODULES.raader.name}, ${MODULES.pleiter.name} et ${MODULES.normer.name} se souscrivent indépendamment — la suite ${SUITE_NAME} les réunit. Offres en cours de finalisation : créez votre espace pour être recontacté en priorité.`}
+            titre="Un abonnement, des modules en option"
+            sous={`L'abonnement ${PLATFORM_NAME} inclut l'assistant et tous ses outils ; ${MODULES.pleiter.name} et ${MODULES.normer.name} s'ajoutent selon vos besoins. Offres en cours de finalisation : créez votre espace pour être recontacté en priorité.`}
           />
           <Link
             to="/signup"

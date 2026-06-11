@@ -53,12 +53,11 @@ export const ONBOARDING_ITEMS: OnboardingItem[] = [
     lien: "/assistant",
     fait: (s) => s.conversations > 0,
   },
-  // ---- Raader ----------------------------------------------------------------
+  // ---- Outils Hofraad (ouverts à tous) ----------------------------------------
   {
     id: "contrat_classe",
     libelle: "Classer un contrat (bail, prestation ou CGV)",
     lien: "/documents",
-    module: "raader",
     fait: (s) =>
       (s.documents_par_type["bail-commercial"] ?? 0) +
         (s.documents_par_type["prestation-services"] ?? 0) +
@@ -69,14 +68,12 @@ export const ONBOARDING_ITEMS: OnboardingItem[] = [
     id: "premier_audit",
     libelle: "Auditer un premier contrat (score de risque + reformulations)",
     lien: "/raader",
-    module: "raader",
     fait: (s) => s.audits > 0,
   },
   {
     id: "premiere_generation",
     libelle: "Générer un premier contrat ou courrier",
     lien: "/raader",
-    module: "raader",
     fait: (s) => s.documents_generes > 0,
   },
   // ---- Pleiter ---------------------------------------------------------------

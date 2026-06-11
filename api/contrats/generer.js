@@ -23,16 +23,6 @@ export default async function handler(req, res) {
   const auth = await requireOrgMember(req, res, org_id);
   if (!auth) return;
 
-  const { data: ent } = await admin
-    .from("entitlements")
-    .select("active")
-    .eq("org_id", org_id)
-    .eq("module", "raader")
-    .maybeSingle();
-  if (!ent?.active) {
-    return res.status(403).json({ error: "Le module Raader n'est pas activé pour votre organisation" });
-  }
-
   try {
     const profil = await contexteOrganisation(org_id);
     const contenu = await deepText({

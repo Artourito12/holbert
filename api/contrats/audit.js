@@ -31,17 +31,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Rôle invalide pour ce type : ${ref.roles.join(" / ")}` });
   }
 
-  // Vérification de l'entitlement Raader
-  const { data: ent } = await admin
-    .from("entitlements")
-    .select("active")
-    .eq("org_id", doc.org_id)
-    .eq("module", "raader")
-    .maybeSingle();
-  if (!ent?.active) {
-    return res.status(403).json({ error: "Le module Raader n'est pas activé pour votre organisation" });
-  }
-
+  // Depuis Hofraad v2, l'audit est ouvert à toutes les organisations (docs/09 §8).
   const { data: audit, error: insertError } = await admin
     .from("audits")
     .insert({

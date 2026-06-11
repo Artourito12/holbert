@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import type { OrgStats } from "@holbert/core";
 import {
   MODULES,
-  MODULE_IDS,
+  ACTIVABLE_MODULE_IDS,
   PLATFORM_NAME,
   onboardingPourModules,
   scoreOnboarding,
@@ -45,7 +45,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<OrgStats>(STATS_VIDES);
   const [loading, setLoading] = useState(true);
 
-  const actifs = MODULE_IDS.filter((id) => hasModule(id));
+  const actifs = ACTIVABLE_MODULE_IDS.filter((id) => hasModule(id));
 
   useEffect(() => {
     if (!currentOrg) return;
@@ -79,12 +79,11 @@ export default function Dashboard() {
         conversations,
       };
 
-      if (hasModule("raader")) {
-        [s.audits, s.documents_generes] = await Promise.all([
-          compter("audits", org),
-          compter("generated_documents", org),
-        ]);
-      }
+      // Les outils Hofraad sont ouverts à tous : compteurs systématiques
+      [s.audits, s.documents_generes] = await Promise.all([
+        compter("audits", org),
+        compter("generated_documents", org),
+      ]);
       if (hasModule("pleiter")) {
         [s.dossiers, s.pieces, s.evenements] = await Promise.all([
           compter("dossiers", org, { statut: "actif" }),
@@ -120,7 +119,7 @@ export default function Dashboard() {
   const kpis: { label: string; valeur: number; lien: string }[] = [
     { label: "Documents", valeur: stats.documents_total, lien: "/documents" },
     { label: "Échéances ≤ 30 jours", valeur: stats.echeances, lien: "/echeancier" },
-    ...(hasModule("raader") ? [{ label: "Audits réalisés", valeur: stats.audits, lien: "/raader" }] : []),
+    { label: "Audits réalisés", valeur: stats.audits, lien: "/raader" },
     ...(hasModule("pleiter") ? [{ label: "Dossiers actifs", valeur: stats.dossiers, lien: "/pleiter" }] : []),
     ...(hasModule("normer") ? [{ label: "Demandes Front Door", valeur: stats.demandes, lien: "/normer" }] : []),
   ];
@@ -136,18 +135,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {actifs.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Aucun module activé pour le moment
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-gray-500 dark:text-gray-400">
-            Votre espace est prêt. L'activation des modules ({MODULES.raader.name},{" "}
-            {MODULES.normer.name}, {MODULES.pleiter.name}) est gérée par l'équipe{" "}
-            {PLATFORM_NAME} — vous serez notifié dès qu'un module sera disponible.
-          </p>
-        </div>
-      ) : (
+      {(
         <>
           {/* KPI */}
           <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -217,8 +205,20 @@ export default function Dashboard() {
               </div>
             </section>
 
-            {/* Modules actifs */}
+            {/* Hofraad + modules actifs */}
             <section className="space-y-4">
+              <Link
+                to="/assistant"
+                className="block rounded-xl border border-brand-200 bg-brand-25 p-5 transition hover:border-brand-300 dark:border-brand-500/30 dark:bg-brand-500/10"
+              >
+                <h3 className="text-base font-semibold text-brand-700 dark:text-brand-400">
+                  {PLATFORM_NAME} →
+                </h3>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                  Votre assistant de recherche juridique : questions, calculs,
+                  contrats, audits — tout sourcé, tout vérifié.
+                </p>
+              </Link>
               {actifs.map((id) => {
                 const mod = MODULES[id];
                 return (
