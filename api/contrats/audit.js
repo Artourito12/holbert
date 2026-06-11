@@ -1,8 +1,9 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { structured, MODEL_SMART } from "../_lib/claude.js";
+import { structuredDeep } from "../_lib/claude.js";
 import { extraireTexte } from "../_lib/extract-text.js";
 import { getReferentiel } from "../_lib/referentiels.js";
+import { contexteOrganisation } from "../_lib/org-context.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
@@ -73,8 +74,10 @@ export default async function handler(req, res) {
       comprendre: "l'utilisateur veut comprendre ses engagements",
     };
 
-    const resultat = await structured({
-      model: MODEL_SMART,
+    const profil = await contexteOrganisation(doc.org_id);
+    const resultat = await structuredDeep({
+      thinkingBudget: 10000,
+      maxTokens: 24000,
       system:
         "Vous êtes l'auditeur de contrats d'une plateforme juridique française. " +
         "Vous auditez un contrat POUR LE CAMP de l'utilisateur, à partir d'un référentiel " +
@@ -91,7 +94,9 @@ export default async function handler(req, res) {
       prompt:
         `Type de contrat : ${ref.meta.nom}\n` +
         `Camp de l'utilisateur : ${role}\n` +
-        `Objectif : ${OBJECTIFS[objectif] ?? objectif}\n\n` +
+        `Objectif : ${OBJECTIFS[objectif] ?? objectif}\n` +
+        profil +
+        "\n" +
         `Référentiel — clauses attendues :\n${JSON.stringify(ref.clauses_attendues, null, 2)}\n\n` +
         `Référentiel — clauses pièges/illégales :\n${JSON.stringify(ref.clauses_pieges, null, 2)}\n\n` +
         `Contrat à auditer :\n---\n${texte.slice(0, 90000)}\n---`,
@@ -121,7 +126,6 @@ export default async function handler(req, res) {
         },
         required: ["score", "synthese", "findings"],
       },
-      maxTokens: 16000,
     });
 
     const findings = (resultat.findings ?? []).map((f, i) => ({

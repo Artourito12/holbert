@@ -1,6 +1,7 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { anthropic, MODEL_SMART } from "../_lib/claude.js";
+import { deepText } from "../_lib/claude.js";
+import { contexteOrganisation } from "../_lib/org-context.js";
 
 // Catalogue minimal côté serveur (miroir de packages/core/src/courriers.ts)
 const COURRIERS = {
@@ -31,9 +32,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reponse = await anthropic.messages.create({
-      model: MODEL_SMART,
-      max_tokens: 4000,
+    const profil = await contexteOrganisation(org_id);
+    const contenu = await deepText({
+      thinkingBudget: 2500,
+      maxTokens: 7000,
       system:
         "Vous rédigez des courriers juridiques français prêts à envoyer. Règles :\n" +
         "- Forme : expéditeur, destinataire, lieu/date, objet, « Lettre recommandée avec accusé de réception » " +
@@ -43,17 +45,12 @@ export default async function handler(req, res) {
         "- Pour toute donnée manquante : [À COMPLÉTER : description].\n" +
         "- Ton ferme et courtois, sans agressivité. Format markdown simple.\n" +
         "- Terminez par « Notes pour l'utilisateur » : mode d'envoi recommandé, délais, étape suivante si échec.",
-      messages: [
-        {
-          role: "user",
-          content:
-            `Type de courrier : ${COURRIERS[type]}\n\n` +
-            `Informations fournies :\n${JSON.stringify(reponses, null, 2)}\n\n` +
-            `Rédigez le courrier complet.`,
-        },
-      ],
+      prompt:
+        `Type de courrier : ${COURRIERS[type]}\n` +
+        profil +
+        `\nInformations fournies :\n${JSON.stringify(reponses, null, 2)}\n\n` +
+        `Rédigez le courrier complet.`,
     });
-    const contenu = reponse.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
 
     const titre = `${COURRIERS[type].split(" (")[0]} — ${new Date().toLocaleDateString("fr-FR")}`;
     const { data: genDoc, error } = await admin

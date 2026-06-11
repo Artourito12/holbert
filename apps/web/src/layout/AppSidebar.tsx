@@ -5,6 +5,7 @@ import { useOrg } from "../context/OrgContext";
 import {
   IconAdmin,
   IconAssistant,
+  IconBuilding,
   IconCalendar,
   IconDashboard,
   IconDocuments,
@@ -52,6 +53,7 @@ export default function AppSidebar() {
   ].filter(Boolean) as NavItem[];
 
   const bottomItems: NavItem[] = [
+    { to: "/organisation", label: "Organisation", icon: IconBuilding },
     { to: "/ui-kit", label: "UI Kit", icon: IconUiKit },
     ...(isPlatformAdmin
       ? [{ to: "/admin", label: "Administration", icon: IconAdmin }]

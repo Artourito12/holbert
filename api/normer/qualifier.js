@@ -1,7 +1,8 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { structured, MODEL_SMART } from "../_lib/claude.js";
+import { structuredDeep } from "../_lib/claude.js";
 import { embed } from "../_lib/openai.js";
+import { contexteOrganisation } from "../_lib/org-context.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
@@ -55,8 +56,10 @@ export default async function handler(req, res) {
     }
 
     // 3. Qualification + proposition de réponse
-    const out = await structured({
-      model: MODEL_SMART,
+    const profil = await contexteOrganisation(demande.org_id);
+    const out = await structuredDeep({
+      thinkingBudget: 3000,
+      maxTokens: 9000,
       system:
         "Vous êtes le Front Door d'une direction juridique française : vous qualifiez les demandes des " +
         "opérationnels et proposez une réponse QUE LE JURISTE VALIDERA (vous ne répondez jamais directement " +
@@ -67,8 +70,9 @@ export default async function handler(req, res) {
         "- Si la demande exige une analyse approfondie ou un avocat externe, dites-le dans la réponse " +
         "proposée et qualifiez la priorité en conséquence.",
       prompt:
-        `Demande de l'opérationnel :\nObjet : ${demande.objet}\n${demande.description ?? ""}\n\n` +
-        `Réponses types validées de l'organisation :\n${JSON.stringify(reponsesTypes ?? [], null, 2)}\n\n` +
+        `Demande de l'opérationnel :\nObjet : ${demande.objet}\n${demande.description ?? ""}\n` +
+        profil +
+        `\nRéponses types validées de l'organisation :\n${JSON.stringify(reponsesTypes ?? [], null, 2)}\n\n` +
         `Extraits de la base documentaire :\n${passages.join("\n---\n") || "(aucun)"}`,
       toolName: "qualifier_demande",
       description: "Qualifie la demande et propose une réponse à valider",
@@ -85,7 +89,6 @@ export default async function handler(req, res) {
         },
         required: ["categorie", "priorite", "reponse_proposee"],
       },
-      maxTokens: 3000,
     });
 
     if (out.reponse_type_utilisee) {

@@ -1,8 +1,9 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { anthropic, structured, MODEL_FAST, MODEL_SMART } from "../_lib/claude.js";
+import { structured, deepText, MODEL_FAST } from "../_lib/claude.js";
 import { embed } from "../_lib/openai.js";
 import { verifierCitations } from "../_lib/legifrance.js";
+import { contexteOrganisation } from "../_lib/org-context.js";
 
 const KINDS = [
   "question", "calcul", "generation", "audit",
@@ -169,9 +170,8 @@ export default async function handler(req, res) {
           ? "(recherche documentaire temporairement indisponible — répondez sur le droit général et signalez-le)"
           : "(aucun document pertinent dans la base de l'organisation)";
 
-      const reponse = await anthropic.messages.create({
-        model: MODEL_SMART,
-        max_tokens: 2000,
+      const profil = await contexteOrganisation(org_id);
+      contenu = await deepText({
         system:
           "Vous êtes l'assistant juridique d'une plateforme française. Règles impératives :\n" +
           "- Vouvoiement, français précis, ton direct et pédagogique, pas d'emojis.\n" +
@@ -180,14 +180,13 @@ export default async function handler(req, res) {
           "de donner le cadre juridique général (avec les textes applicables).\n" +
           "- Vous fournissez de l'information juridique, jamais de conseil individualisé.\n" +
           "- Restez concis : répondez à la question, pas plus.",
-        messages: [
-          {
-            role: "user",
-            content: `Extraits des documents de l'organisation :\n${contexte}\n\nQuestion : ${texte}`,
-          },
-        ],
+        prompt:
+          `Extraits des documents de l'organisation :\n${contexte}\n` +
+          profil +
+          `\nQuestion : ${texte}`,
+        thinkingBudget: 2000,
+        maxTokens: 5000,
       });
-      contenu = reponse.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
     } else {
       contenu =
         `J'ai bien compris votre demande (${intent.kind.replace("_", " ")}), mais cette compétence n'est pas encore ouverte : ` +

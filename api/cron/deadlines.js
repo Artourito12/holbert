@@ -1,9 +1,10 @@
 import { admin } from "../_lib/supabase-admin.js";
+import { envoyerEmail, emailConfigure } from "../_lib/email.js";
 
 /**
  * Cron quotidien (cf. vercel.json) : pour chaque échéance à venir dont un
- * palier d'alerte tombe aujourd'hui, notifie tous les membres de l'org.
- * Email (Resend) prévu à un prochain jalon — in-app seulement pour l'instant.
+ * palier d'alerte tombe aujourd'hui, notifie tous les membres de l'org
+ * (in-app + email si Resend est configuré).
  */
 export default async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
@@ -33,16 +34,34 @@ export default async function handler(req, res) {
       .eq("org_id", d.org_id);
 
     if (!membres?.length) continue;
+    const dateFr = new Date(d.date_echeance + "T00:00:00").toLocaleDateString("fr-FR");
     const { error: insertError } = await admin.from("notifications").insert(
       membres.map((m) => ({
         org_id: d.org_id,
         user_id: m.user_id,
         titre: `Échéance dans ${joursRestants} jour(s) : ${d.titre}`,
-        corps: `Date d'échéance : ${new Date(d.date_echeance + "T00:00:00").toLocaleDateString("fr-FR")}`,
+        corps: `Date d'échéance : ${dateFr}`,
         lien: "/echeancier",
       }))
     );
     if (!insertError) notifiees += membres.length;
+
+    if (emailConfigure()) {
+      const { data: profils } = await admin
+        .from("profiles")
+        .select("email")
+        .in("user_id", membres.map((m) => m.user_id));
+      const emails = (profils ?? []).map((p) => p.email).filter(Boolean);
+      if (emails.length) {
+        await envoyerEmail({
+          to: emails,
+          subject: `[Holbert] Échéance dans ${joursRestants} jour(s) : ${d.titre}`,
+          text:
+            `Une échéance approche.\n\n${d.titre}\nDate : ${dateFr} (J-${joursRestants})\n\n` +
+            `Retrouvez le détail dans votre échéancier Holbert.\n\n— Holbert`,
+        });
+      }
+    }
   }
 
   return res.status(200).json({ echeances_examinees: deadlines?.length ?? 0, notifications: notifiees });

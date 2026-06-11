@@ -1,6 +1,6 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { structured, MODEL_SMART } from "../_lib/claude.js";
+import { structuredDeep } from "../_lib/claude.js";
 import { extraireTexte } from "../_lib/extract-text.js";
 import { getReferentiel, REFERENTIELS } from "../_lib/referentiels.js";
 
@@ -47,8 +47,9 @@ export default async function handler(req, res) {
       requis: f.requis,
     }));
 
-    const extraction = await structured({
-      model: MODEL_SMART,
+    const extraction = await structuredDeep({
+      thinkingBudget: 4000,
+      maxTokens: 14000,
       system:
         "Vous êtes l'extracteur documentaire d'une plateforme juridique française. " +
         "Vous extrayez des données structurées d'un document, fait par fait, en citant " +
@@ -95,7 +96,6 @@ export default async function handler(req, res) {
         },
         required: ["faits"],
       },
-      maxTokens: 8000,
     });
 
     const connus = new Set(ref.extraction.faits.map((f) => f.id));

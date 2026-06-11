@@ -50,6 +50,11 @@ export const OrgProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     setLoading(true);
 
+    // Rattache les invitations en attente pour cet email (idempotent)
+    await supabase.rpc("accepter_invitations").then(({ error }) => {
+      if (error) console.error(`[${PLATFORM_NAME}] accepter_invitations:`, error.message);
+    });
+
     const [orgsRes, adminRes] = await Promise.all([
       supabase.from("orgs").select("*").order("created_at"),
       supabase.from("platform_admins").select("user_id").eq("user_id", user.id),

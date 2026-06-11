@@ -22,6 +22,7 @@ import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
 import Echeancier from "./pages/Echeancier";
 import Assistant from "./pages/Assistant";
+import Organisation from "./pages/Organisation";
 import UiKit from "./pages/UiKit";
 import AdminPage from "./pages/admin/AdminPage";
 import NotFound from "./pages/NotFound";
@@ -86,6 +87,7 @@ export default function App() {
             <Route path="/documents" element={<Documents />} />
             <Route path="/documents/:id" element={<DocumentDetail />} />
             <Route path="/echeancier" element={<Echeancier />} />
+            <Route path="/organisation" element={<Organisation />} />
             <Route element={<RequireModule module="raader" />}>
               <Route path="/raader" element={<RaaderHub />} />
               <Route path="/audits/:id" element={<AuditDetail />} />

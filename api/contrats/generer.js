@@ -1,7 +1,8 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { anthropic, MODEL_SMART } from "../_lib/claude.js";
+import { deepText } from "../_lib/claude.js";
 import { REFERENTIELS } from "../_lib/referentiels.js";
+import { contexteOrganisation } from "../_lib/org-context.js";
 
 const VARIANTES = {
   protectrice_a: (roles) => `très protectrice pour le camp "${roles[0] ?? "partie A"}"`,
@@ -33,9 +34,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const reponse = await anthropic.messages.create({
-      model: MODEL_SMART,
-      max_tokens: 16000,
+    const profil = await contexteOrganisation(org_id);
+    const contenu = await deepText({
+      thinkingBudget: 5000,
+      maxTokens: 20000,
       system:
         "Vous êtes le rédacteur de contrats d'une plateforme juridique française. " +
         "Vous rédigez un contrat COMPLET, prêt à relire par les parties, en français juridique " +
@@ -48,21 +50,16 @@ export default async function handler(req, res) {
         "- Utilisez les réponses de l'utilisateur ; pour toute donnée manquante, insérez [À COMPLÉTER : description].\n" +
         "- Terminez par une section « Notes pour l'utilisateur » listant les choix faits et les points à vérifier.\n" +
         "- Format : markdown simple (titres #, ##, paragraphes).",
-      messages: [
-        {
-          role: "user",
-          content:
-            `Type de contrat : ${ref.meta.nom}\n` +
-            `Variante demandée : ${VARIANTES[variante](ref.roles)}\n` +
-            (role ? `Camp de l'utilisateur : ${role}\n` : "") +
-            `\nClauses attendues (référentiel) :\n${JSON.stringify(ref.clauses_attendues, null, 2)}\n` +
-            `\nPièges à éviter (référentiel) :\n${JSON.stringify(ref.clauses_pieges, null, 2)}\n` +
-            `\nRéponses de l'utilisateur au questionnaire :\n${JSON.stringify(reponses, null, 2)}\n\n` +
-            `Rédigez le contrat complet.`,
-        },
-      ],
+      prompt:
+        `Type de contrat : ${ref.meta.nom}\n` +
+        `Variante demandée : ${VARIANTES[variante](ref.roles)}\n` +
+        (role ? `Camp de l'utilisateur : ${role}\n` : "") +
+        profil +
+        `\nClauses attendues (référentiel) :\n${JSON.stringify(ref.clauses_attendues, null, 2)}\n` +
+        `\nPièges à éviter (référentiel) :\n${JSON.stringify(ref.clauses_pieges, null, 2)}\n` +
+        `\nRéponses de l'utilisateur au questionnaire :\n${JSON.stringify(reponses, null, 2)}\n\n` +
+        `Rédigez le contrat complet.`,
     });
-    const contenu = reponse.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
 
     const titre = `${ref.meta.nom} — ${new Date().toLocaleDateString("fr-FR")}`;
     const { data: genDoc, error } = await admin

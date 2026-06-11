@@ -1,6 +1,7 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { anthropic, structured, MODEL_SMART } from "../_lib/claude.js";
+import { structuredDeep, deepText } from "../_lib/claude.js";
+import { contexteOrganisation } from "../_lib/org-context.js";
 
 const FINDINGS_SCHEMA = {
   type: "object",
@@ -95,7 +96,11 @@ export default async function handler(req, res) {
 
   const [{ data: evenements }, { data: pieces }] = await Promise.all([
     admin.from("evenements").select("*").eq("dossier_id", dossier_id).order("date"),
-    admin.from("pieces").select("id, numero, intitule").eq("dossier_id", dossier_id).order("numero"),
+    admin
+      .from("pieces")
+      .select("id, numero, intitule, documents(texte)")
+      .eq("dossier_id", dossier_id)
+      .order("numero"),
   ]);
 
   if (!evenements?.length) {
@@ -104,12 +109,23 @@ export default async function handler(req, res) {
     });
   }
 
+  const profil = await contexteOrganisation(dossier.org_id);
+
+  // Les analyses lisent aussi le CONTENU des pièces (pas seulement la
+  // chronologie) — tronqué pour tenir dans le contexte.
+  const budgetParPiece = Math.floor(60000 / Math.max(1, (pieces ?? []).length));
+  const contenuPieces = (pieces ?? [])
+    .filter((p) => p.documents?.texte)
+    .map((p) => `--- Pièce n° ${p.numero} — ${p.intitule} ---\n${p.documents.texte.slice(0, budgetParPiece)}`)
+    .join("\n\n");
+
   const contexte =
     `Dossier : ${dossier.nom}\n` +
     `Parties : ${JSON.stringify(dossier.parties)}\n` +
     `Juridiction : ${dossier.juridiction ?? "non précisée"} · Procédure : ${dossier.type_procedure ?? "non précisée"}\n` +
-    `Enjeu : ${dossier.enjeu_financier ? `${dossier.enjeu_financier} €` : "non précisé"}\n\n` +
-    `Bordereau des pièces :\n${(pieces ?? []).map((p) => `Pièce n° ${p.numero} — ${p.intitule}`).join("\n")}\n\n` +
+    `Enjeu : ${dossier.enjeu_financier ? `${dossier.enjeu_financier} €` : "non précisé"}\n` +
+    profil +
+    `\nBordereau des pièces :\n${(pieces ?? []).map((p) => `Pièce n° ${p.numero} — ${p.intitule}`).join("\n")}\n\n` +
     `Chronologie (événements sourcés) :\n` +
     evenements
       .map((e) => {
@@ -117,32 +133,32 @@ export default async function handler(req, res) {
         const visa = piece ? ` (pièce n° ${piece.numero})` : "";
         return `- ${e.date} : ${e.titre}${e.description ? ` — ${e.description}` : ""}${visa}${e.source_passage ? ` [source : « ${e.source_passage.slice(0, 150)} »]` : ""}`;
       })
-      .join("\n");
+      .join("\n") +
+    (contenuPieces ? `\n\nContenu des pièces :\n${contenuPieces}` : "");
 
   try {
     let resultat = null;
     let contenu = null;
 
     if (PROMPTS[type].structured) {
-      const out = await structured({
-        model: MODEL_SMART,
+      const out = await structuredDeep({
         system: PROMPTS[type].system,
         prompt: contexte,
         toolName: "rendre_analyse",
         description: "Restitue l'analyse structurée du dossier",
         schema: FINDINGS_SCHEMA,
-        maxTokens: 8000,
+        thinkingBudget: 8000,
+        maxTokens: 20000,
       });
       resultat = out;
       contenu = out.synthese;
     } else {
-      const reponse = await anthropic.messages.create({
-        model: MODEL_SMART,
-        max_tokens: 12000,
+      contenu = await deepText({
         system: PROMPTS[type].system,
-        messages: [{ role: "user", content: contexte }],
+        prompt: contexte,
+        thinkingBudget: 8000,
+        maxTokens: 16000,
       });
-      contenu = reponse.content.filter((b) => b.type === "text").map((b) => b.text).join("\n");
     }
 
     const { data: analyse, error } = await admin

@@ -1,6 +1,6 @@
 import { admin, logAudit } from "../_lib/supabase-admin.js";
 import { requireOrgMember } from "../_lib/auth.js";
-import { structured, MODEL_SMART } from "../_lib/claude.js";
+import { structuredDeep } from "../_lib/claude.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Méthode non autorisée" });
@@ -36,8 +36,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const extraction = await structured({
-      model: MODEL_SMART,
+    const extraction = await structuredDeep({
+      thinkingBudget: 2500,
+      maxTokens: 10000,
       system:
         "Vous construisez la chronologie d'un dossier contentieux français à partir d'une pièce. " +
         "Vous extrayez TOUS les événements datés pertinents pour le litige (faits, paiements, courriers, " +
@@ -71,7 +72,6 @@ export default async function handler(req, res) {
         },
         required: ["evenements"],
       },
-      maxTokens: 8000,
     });
 
     const valides = (extraction.evenements ?? []).filter((e) =>

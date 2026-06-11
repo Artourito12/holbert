@@ -267,6 +267,28 @@ export type ReponseType = {
   created_at: string;
 };
 
+export type OrgProfil = {
+  org_id: string;
+  activite: string | null;
+  forme_juridique: string | null;
+  effectif: string | null;
+  convention_collective: string | null;
+  implantations: string | null;
+  contexte_ia: string | null;
+  updated_by: string | null;
+  updated_at: string;
+};
+
+export type Invitation = {
+  id: string;
+  org_id: string;
+  email: string;
+  role: "admin" | "member";
+  invited_by: string;
+  created_at: string;
+  accepted_at: string | null;
+};
+
 export type AuditLogEntry = {
   id: number;
   org_id: string | null;
