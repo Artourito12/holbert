@@ -1,0 +1,5 @@
+@import "../../../packages/ui/src/tokens.css";
+
+/* Les composants du design system vivent hors de apps/web :
+   on déclare explicitement leurs sources pour le scan Tailwind. */
+@source "../../../packages/ui/src";

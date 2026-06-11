@@ -1,73 +1,53 @@
-# React + TypeScript + Vite
+# Holbert — plateforme juridique IA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Plateforme d'information juridique et d'aide à la décision, en trois modules
+activables par organisation :
 
-Currently, two official plugins are available:
+| Module | Cible | Contenu |
+|---|---|---|
+| **Raader** | Particuliers, TPE, opérationnels | Chat juridique, calculs, courriers + audit & création de contrats |
+| **Normer** | Juristes d'entreprise, DJ | Front Door, compliance, vie sociale |
+| **Pleiter** | Avocats, cabinets | Dossiers contentieux, chronologie, écritures |
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+La suite complète s'appelle **Orders**. Voir `docs/` pour le design system
+(hérité de Heldert, brand bordeaux) et l'architecture validée.
 
-## React Compiler
+## Structure du monorepo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+packages/ui      @holbert/ui — design system (tokens, icônes, composants)
+packages/core    @holbert/core — types, modules, logique pure
+apps/web         application React (Vite)
+api/             fonctions serverless Vercel (jalon 2+)
+supabase/        migrations SQL + tests RLS
+referentiels/    référentiels documentaires YAML (jalon 2+)
+baremes/         barèmes de calcul datés (jalon 4+)
+docs/            rapports design system & architecture
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Démarrer
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev        # lance apps/web (http://localhost:5173)
+npm run build      # typecheck + build de production
 ```
+
+Variables d'environnement : copier `.env.example` vers `.env.local` à la
+racine et remplir les clés Supabase.
+
+## Base de données
+
+Exécuter dans l'éditeur SQL du dashboard Supabase, dans l'ordre :
+
+1. `supabase/migrations/001_foundation.sql`
+2. Créer votre compte dans l'application (signup)
+3. `supabase/migrations/002_seed_platform_admin.sql` (désigne le super admin)
+4. `supabase/tests/rls_smoke.sql` — doit afficher « RLS OK — isolation vérifiée »
+
+## Règles du projet
+
+- Le projet Heldert (`../RH`) est la référence design, en **lecture seule**.
+- Le nom « Holbert » peut changer : il vit dans `packages/core/src/config.ts`,
+  jamais en dur ailleurs.
+- Ton éditorial : français, vouvoiement, direct, sans emojis (cf. docs/01).
