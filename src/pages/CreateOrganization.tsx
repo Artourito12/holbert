@@ -32,6 +32,10 @@ export default function CreateOrganization() {
       const { data: { session } } = await supabase.auth.getSession();
       lines.push(`Session client : ${session ? "PRESENTE" : "MANQUANTE"}`);
       if (session) {
+        const header = JSON.parse(atob(session.access_token.split(".")[0]));
+        lines.push(`  JWT header alg: ${header.alg}`);
+        lines.push(`  JWT header kid: ${header.kid ?? "(aucun)"}`);
+        lines.push(`  JWT header typ: ${header.typ}`);
         const payload = JSON.parse(atob(session.access_token.split(".")[1]));
         lines.push(`  role: ${payload.role}`);
         lines.push(`  sub: ${payload.sub}`);
