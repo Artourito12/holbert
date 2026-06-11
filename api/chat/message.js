@@ -451,7 +451,7 @@ export default async function handler(req, res) {
       // Acte / courrier : imiter les MODÈLES du cabinet quand il y en a (docs/10)
       const { data: templates } = await admin
         .from("actes_templates")
-        .select("id, nom_fichier, type_acte, description, analyse, texte")
+        .select("id, nom_fichier, type_acte, description, analyse_ia, texte")
         .eq("org_id", org_id)
         .eq("statut", "ready");
 
@@ -509,7 +509,7 @@ export default async function handler(req, res) {
         profilGen +
         (modele
           ? `\nMODÈLE DU CABINET (${modele.nom_fichier}) :\n` +
-            `Analyse : ${JSON.stringify(modele.analyse)}\n` +
+            `Analyse : ${JSON.stringify(modele.analyse_ia)}\n` +
             `Texte intégral du modèle :\n---\n${(modele.texte ?? "").slice(0, 25000)}\n---\n`
           : "") +
         `\nRédigez l'acte complet.`;

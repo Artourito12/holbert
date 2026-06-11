@@ -1,6 +1,7 @@
 /* 010 — Modeles d'actes fournis par l'utilisateur, analyses par l'IA
    (structure, en-tete, champs variables, style) puis imites a la generation.
-   Idempotent. Commentaires en bloc pour survivre aux copier-coller. */
+   Idempotent. NB : la colonne s'appelle analyse_ia car "analyse" est un
+   mot reserve PostgreSQL (orthographe britannique de ANALYZE). */
 
 create table if not exists actes_templates (
   id uuid primary key default gen_random_uuid(),
@@ -11,7 +12,7 @@ create table if not exists actes_templates (
   type_acte text,
   description text,
   texte text,
-  analyse jsonb,
+  analyse_ia jsonb,
   statut text not null default 'processing' check (statut in ('processing','ready','error')),
   erreur text,
   created_by uuid not null references auth.users(id),

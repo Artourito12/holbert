@@ -113,7 +113,7 @@ export default async function handler(req, res) {
         type_acte: analyse.type_acte,
         description: analyse.description,
         texte,
-        analyse,
+        analyse_ia: analyse,
       })
       .eq("id", tpl.id)
       .select()

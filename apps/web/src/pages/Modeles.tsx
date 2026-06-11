@@ -10,7 +10,7 @@ type ActeTemplate = {
   storage_path: string;
   type_acte: string | null;
   description: string | null;
-  analyse: {
+  analyse_ia: {
     en_tete?: string;
     structure?: { section: string; role: string; adaptable: boolean }[];
     champs_variables?: string[];
@@ -183,34 +183,34 @@ export default function Modeles() {
                   </button>
                 </p>
               )}
-              {tpl.statut === "ready" && tpl.analyse && (
+              {tpl.statut === "ready" && tpl.analyse_ia && (
                 <details className="mt-2">
                   <summary className="cursor-pointer text-xs font-medium text-brand-600">
                     Ce que l'IA a capturé
                   </summary>
                   <div className="mt-2 space-y-2 text-xs text-gray-500 dark:text-gray-400">
-                    {tpl.analyse.en_tete && (
+                    {tpl.analyse_ia.en_tete && (
                       <p>
                         <span className="font-medium text-gray-600 dark:text-gray-300">En-tête :</span>{" "}
-                        {tpl.analyse.en_tete.slice(0, 300)}
+                        {tpl.analyse_ia.en_tete.slice(0, 300)}
                       </p>
                     )}
-                    {tpl.analyse.structure && (
+                    {tpl.analyse_ia.structure && (
                       <p>
                         <span className="font-medium text-gray-600 dark:text-gray-300">Structure :</span>{" "}
-                        {tpl.analyse.structure.map((s) => s.section).join(" → ")}
+                        {tpl.analyse_ia.structure.map((s) => s.section).join(" → ")}
                       </p>
                     )}
-                    {tpl.analyse.champs_variables && (
+                    {tpl.analyse_ia.champs_variables && (
                       <p>
                         <span className="font-medium text-gray-600 dark:text-gray-300">Variables :</span>{" "}
-                        {tpl.analyse.champs_variables.join(", ")}
+                        {tpl.analyse_ia.champs_variables.join(", ")}
                       </p>
                     )}
-                    {tpl.analyse.style && (
+                    {tpl.analyse_ia.style && (
                       <p>
                         <span className="font-medium text-gray-600 dark:text-gray-300">Style :</span>{" "}
-                        {tpl.analyse.style.slice(0, 300)}
+                        {tpl.analyse_ia.style.slice(0, 300)}
                       </p>
                     )}
                   </div>
