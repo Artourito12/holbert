@@ -136,7 +136,7 @@ export default function Landing() {
       <section className="relative overflow-hidden bg-brand-25 pb-24 pt-20">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-cover bg-bottom bg-no-repeat opacity-50"
+          className="absolute inset-0 bg-contain bg-bottom bg-no-repeat opacity-50"
           style={{ backgroundImage: "url('/hero-scene.png')" }}
         />
         <div
